@@ -1,7 +1,0 @@
-supplier,checked_at,min_order_rub,delivery_low_rub,delivery_high_rub,free_delivery_threshold_rub,free_delivery_scope,source_url,conditions
-Декантер СПб,2026-10-15,,,,,unknown,https://spb.decanter.ru/vodka/05-l,Розничная котировка; наличие уточнить; доставка или самовывоз требуют согласования
-АкваБалт,2026-10-15,,,,,unknown,https://aquabalt.ru/catalog/k-chayu/saharnyy-pesok--1-kg,Цена товара опубликована; минимальная сумма и тариф всей заявки не установлены
-ВкусВилл,2026-10-15,,,,,address_not_selected,https://vkusvill.ru/goods/slivki-10-1225/,Адрес не выбран; показанные способы доставки не подтверждают условия конкретного заказа
-Мультифрукт СПб,2026-10-15,,,,,unknown,https://multifrukt-spb.ru/products/246,Единица продажи хрена 500 г; минимум заявки и доставка не установлены
-ФрутСтар,2026-10-15,,700,700,5000,city_all,https://frutstar.ru/delivery,Городской тариф до 5000 ₽; при достижении порога бесплатно; область по согласованию
-Дарим Лето,2026-10-15,500,500,700,5000,red_zone_only,https://darim-leto.ru/dostavka,Красная зона 500 ₽; синяя 600 ₽; зелёная 700 ₽; бесплатно от 5000 ₽ только красная зона; адрес неизвестен

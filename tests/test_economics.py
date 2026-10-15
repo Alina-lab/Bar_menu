@@ -1,249 +1,159 @@
-"""Критические единицы, расходы, закупочные остатки и сохранность базы."""
-
+"""Контрольные результаты автора и различие производства, закупки и продаж."""
 import hashlib
 import json
-import subprocess
-import sys
-from pathlib import Path
+import zipfile
+from decimal import Decimal as D
 
-import numpy as np
-import pandas as pd
 import pytest
-
 from scripts import economics as e
-from scripts import workbook
-
-ROOT=Path(__file__).resolve().parents[1]
 
 
-@pytest.fixture
-def ingredients():
-    # Искусственные числа нужны только для проверки арифметики, не являются ценами проекта.
-    return pd.DataFrame([
-        {"ingredient_id":"vodka","package_price_rub":180,"package_base_quantity":500,"rub_per_base_unit":.36},
-        {"ingredient_id":"berry","package_price_rub":500,"package_base_quantity":1000,"rub_per_base_unit":.5},
-    ]).set_index("ingredient_id")
+@pytest.fixture(scope="module")
+def inputs():
+    return e.load_inputs()
 
 
-def test_unit_dimensions():
-    c=e.read_config()
-    assert e.quantity_in_base(1,"kg",c)==(1000.,"g")
-    assert e.quantity_in_base(1,"l",c)==(1000.,"ml")
-    assert e.quantity_in_base(200,"g",c)==(200.,"g")
-    assert e.quantity_in_base(200,"ml",c)==(200.,"ml")
-    with pytest.raises(ValueError):e.quantity_in_base(1,"spoon",c)
+@pytest.fixture(scope="module")
+def base(inputs):
+    return e.calculate(inputs)
 
 
-def test_cost_with_yield_and_loss(ingredients):
-    result=e.recipe_cost({"vodka":500,"berry":250},ingredients,1000,.20)
-    assert result["batch_ingredient_cost_rub"]==305
-    assert result["ready_ml"]==800
-    assert result["cost_liter_rub"]==381.25
-    assert result["cost_50ml_rub"]==19.0625
+def test_exact_production_basis(inputs,base):
+    assert len(inputs[0])==10
+    assert sum(r['tier']=='basic' for r in inputs[0])==8
+    assert sum(r['tier']=='premium' for r in inputs[0])==2
+    assert e.target_volume(inputs[4])==6000
+    assert base[3]['total_ready_ml']==60000 and base[3]['total_portions']==1200
+    assert all(r['target_ready_ml']==6000 and r['portions']==120 for r in base[0])
+    assert e.D(inputs[3]['vodka']['pack_price_rub'])/e.D(inputs[3]['vodka']['pack_size_base'])*1000==380
+    assert inputs[3]['vodka']['product']=='Водка Царская Оригинальная 40%'
 
 
-def test_extra_loss_is_nonlinear(ingredients):
-    a=e.recipe_cost({"vodka":500},ingredients,1000,.10)
-    b=e.recipe_cost({"vodka":500},ingredients,1000,.20)
-    assert b["cost_50ml_rub"]/a["cost_50ml_rub"]==pytest.approx(.9/.8)
+@pytest.mark.parametrize('iid,expected', [('vodka',48),('raspberry',6),('sea_buckthorn',5),('cranberry',4),('cherry',3),('apple',5),('sugar',10),('honey',3),('lemon',8),('sorrel',12),('halva',32),('basil',3),('cream',2),('milk',2),('ginger',1),('horseradish',2)])
+def test_all_procurement_controls(base,iid,expected):
+    row=next(r for r in base[2] if r['ingredient_id']==iid)
+    assert row['packs_to_buy']==expected
 
 
-@pytest.mark.parametrize("loss",[-.1,1,1.1])
-def test_invalid_loss_rejected(ingredients,loss):
-    with pytest.raises(ValueError):e.recipe_cost({"vodka":500},ingredients,1000,loss)
+@pytest.mark.parametrize('cid,expected', [('C01','3322.66'),('C02','3547.61'),('C03','4449.53'),('C04','3026.20'),('C05','4096.98'),('C06','4428.93'),('C09','2554.68'),('C12','3965.91'),('C13','3306.58'),('C14','3658.52')])
+def test_each_6l_cost_control(base,cid,expected):
+    row=next(r for r in base[0] if r['candidate_id']==cid)
+    assert e.money(row['used_cost_rub'])==D(expected)
+    assert abs(row['cost_50ml_rub']*120-row['used_cost_rub'])<D('1e-40')
 
 
-def test_empty_or_unknown_price_rejected(ingredients):
-    with pytest.raises(ValueError):e.recipe_cost({"unknown":5},ingredients,500,.1)
-    ingredients.loc["vodka","rub_per_base_unit"]=np.nan
-    with pytest.raises(ValueError):e.recipe_cost({"vodka":500},ingredients,500,.1)
+def test_aggregate_controls_and_rounding_reconciliation(base):
+    s=base[3]
+    assert s['purchase_cost_rub']==D('40002.80')
+    assert s['potential_revenue_rub']==312000
+    assert e.money(s['used_cost_rub'])==D('36357.61')
+    assert s['displayed_item_costs_sum_rub']==D('36357.60')
+    assert e.money(s['potential_material_contribution_rub'])==D('275642.39')
+    assert e.money(s['leftover_value_rub'])==D('3645.19')
+    # Авторские ориентиры суммируют уже округлённые строки; отклонение ровно копейка.
+    assert abs(e.money(s['used_cost_rub'])-D('36357.60'))<=D('.01')
+    assert abs(e.money(s['potential_material_contribution_rub'])-D('275642.40'))<=D('.01')
+    assert abs(s['material_margin_fraction']-D('.8835'))<D('.0001')
+    assert s['net_profit_rub'] is None and s['delivery_cost_rub'] is None
 
 
-def test_whole_packages_and_inventory(ingredients):
-    basket=e.procurement({"berry":1500},ingredients)
-    row=basket.loc["berry"]
-    assert row.packages==2
-    assert row.purchase_cash_rub==1000
-    assert row.consumed_cost_rub==750
-    assert row.leftover_base_quantity==500
-    assert row.leftover_value_rub==250
-    assert row.purchase_cash_rub==row.consumed_cost_rub+row.leftover_value_rub
-    assert row.additional_cash_second_cycle_rub==500
+def test_supplier_controls(base):
+    totals={name:sum(r['purchase_cost_rub'] for r in base[2] if r['supplier']==name) for name in {r['supplier'] for r in base[2]}}
+    assert totals=={'Ладога':D('18240'),'METRO':D('19781.80'),'Агропарк СПб':D('1981')}
 
 
-def test_joint_procurement_avoids_double_rounding(ingredients):
-    first=e.procurement({"berry":600},ingredients).purchase_cash_rub.sum()
-    second=e.procurement({"berry":400},ingredients).purchase_cash_rub.sum()
-    joint=e.procurement({"berry":1000},ingredients).purchase_cash_rub.sum()
-    assert first+second==1000 and joint==500
+def test_quantities_and_shared_raspberry(base):
+    b={r['ingredient_id']:r for r in base[2]}
+    assert abs(b['vodka']['needed_quantity']/1000-D('47.300705335'))<D('.000000001')
+    assert abs(b['raspberry']['needed_quantity']/1000-D('5.218487395'))<D('.000000001')
+    r=b['raspberry']
+    assert set(r['candidate_ids'].split('|'))=={'C03','C12'}
+    assert r['separate_recipe_packs']==6 and r['packs_to_buy']==6
+    assert r['joint_rounding_saving_rub']==0
 
 
-def test_negative_demand_rejected(ingredients):
-    with pytest.raises(ValueError):e.procurement({"berry":-10},ingredients)
+def test_no_negative_inventory_and_exact_material_balance(base):
+    for r in base[2]:
+        assert r['leftover_quantity']>=0
+        assert r['purchase_cost_rub']==r['used_cost_rub']+r['leftover_value_rub']
+        assert r['purchased_quantity']>=r['needed_quantity']
+        assert r['packs_to_buy']==e.pack_count(r['needed_quantity'],r['pack_size_base'])
+    assert abs(sum(r['used_cost_rub'] for r in base[2])-base[3]['used_cost_rub'])<D('1e-40')
 
 
-def test_price_shock_changes_cash_and_used_cost(ingredients):
-    a=e.procurement({"berry":1500},ingredients)
-    b=e.procurement({"berry":1500},ingredients,1.2)
-    assert b.purchase_cash_rub.sum()==pytest.approx(a.purchase_cash_rub.sum()*1.2)
-    assert b.consumed_cost_rub.sum()==pytest.approx(a.consumed_cost_rub.sum()*1.2)
+def test_partial_sales_do_not_reverse_production(inputs,base):
+    sales=e.scenario_tables(inputs,base)[0]
+    half=next(r for r in sales if r['sell_through']==D('.5'))
+    assert half['realized_revenue_rub']==156000
+    assert half['sold_portions']==600 and half['unsold_ready_ml']==30000
+    assert half['all_production_material_rub']==base[3]['used_cost_rub']
+    assert abs(half['unsold_finished_material_value_rub']-base[3]['used_cost_rub']/2)<D('1e-40')
+    assert half['revenue_minus_all_production_material_rub']==156000-base[3]['used_cost_rub']
+    assert half['contribution_after_sold_material_rub']>half['revenue_minus_all_production_material_rub']
 
 
-def test_material_margin():
-    assert e.material_margin(200,50)==(150,.75)
-    assert e.material_margin(100,120)==(-20,-.2)
+def test_mix_cannot_sell_nonexistent_premium_stock(inputs,base):
+    mix=e.scenario_tables(inputs,base)[1]
+    for share,price in [(D('.05'),D('252.5')),(D('.2'),D('260')),(D('.35'),D('267.5'))]:
+        rows=[r for r in mix if r['premium_share']==share]
+        assert all(r['weighted_price_rub']==price for r in rows)
+    invalid=next(r for r in mix if r['premium_share']==D('.35') and r['requested_total_sell_through']==1)
+    assert not invalid['stock_feasible'] and invalid['realized_revenue_if_feasible_rub'] is None
+    assert invalid['max_feasible_total_portions']<686
+    assert all(r['stock_feasible'] for r in mix if r['premium_share']==D('.2'))
 
 
-@pytest.mark.parametrize("share,expected",[(.05,235),(.20,250),(.35,265)])
-def test_sales_weighted_price(share,expected):
-    assert e.weighted_price(230,330,share)==pytest.approx(expected)
+def test_price_and_yield_sensitivity(inputs,base):
+    up=e.calculate(inputs,price_multiplier=D('1.2'))
+    assert up[3]['purchase_cost_rub']==base[3]['purchase_cost_rub']*D('1.2')
+    assert abs(up[3]['used_cost_rub']-base[3]['used_cost_rub']*D('1.2'))<D('1e-40')
+    lower=e.calculate(inputs,yield_multiplier=D('.8'))
+    assert lower[3]['total_ready_ml']==60000
+    assert abs(lower[3]['used_cost_rub']-base[3]['used_cost_rub']/D('.8'))<D('1e-40')
+    assert lower[3]['purchase_cost_rub']>base[3]['purchase_cost_rub']
 
 
-def test_target_share_and_menu_average():
-    assert (8*230+2*330)/10==250
-    assert e.required_premium_share(230,330,250)==.2
-    assert e.required_premium_share(230,330,400) is None
-    assert e.weighted_price(230,330,.05)<250
+@pytest.mark.parametrize('quantity,size,expected', [('1000','1000',1),('1000.000000000000001','1000',2),('999.999999999999999','1000',1),('0','1000',0)])
+def test_decimal_pack_boundaries(quantity,size,expected):
+    assert e.pack_count(D(quantity),D(size))==expected
 
 
-def test_original_files_and_normalization_unchanged():
-    e.check_baseline()
-    frames=e.workbook_frames()
-    assert len(frames["reviews"])==368 and len(frames["mentions"])==468
-    assert frames["reviews"]["ID отзыва"].is_unique
-    assert frames["mentions"]["ID"].is_unique
-    dictionary=frames["flavors"].fillna("").to_dict(orient="records")
-    assert workbook.normalize_flavor("кокос с бананом",dictionary)=="Банан — кокос"
+def test_relative_calendar_and_storage_status(inputs):
+    rows=e.calendar(inputs)
+    assert min(r['start_day_relative'] for r in rows)==-30
+    assert all(r['start_date'] is None for r in rows)
+    c12=[r for r in rows if r['candidate_id']=='C12']
+    assert next(r for r in c12 if r['phase']=='infusion')['start_day_relative']==-9
+    cool=next(r for r in c12 if r['phase']=='refrigerated_rest')
+    assert (cool['start_day_relative'],cool['end_day_relative'])==(-2,0)
+    assert all(r['time_interpretation']=='placement_marker_not_zero_duration' for r in rows if r['duration_days'] is None)
+    assert inputs[1]['C12']['author_observed_storage_days']==14
+    assert inputs[1]['C12']['validated_shelf_life_days'] is None
+    assert all(r['final_abv_pct'] is None for r in inputs[1].values())
 
 
-def test_old_refresh_works_on_copy(tmp_path):
-    copy=tmp_path/"copy.xlsx"
-    original=ROOT/"data/nastoyki_reviews.xlsx"
-    copy.write_bytes(original.read_bytes())
-    result=subprocess.run([sys.executable,str(ROOT/"scripts/workbook.py"),"refresh",
-                           "--workbook",str(copy),"--export-dir",str(tmp_path/"processed")],
-                          capture_output=True,text=True,check=True)
-    report=json.loads(result.stdout)
-    assert report["stats"]["reviews_total"]==368
-    assert report["stats"]["concrete_mentions_verified"]==198
-    assert report["quality"]["errors"]==[]
-    old=pd.read_csv(ROOT/"data/processed/reviews.csv")
-    new=pd.read_csv(tmp_path/"processed/reviews.csv")
-    assert set(old["ID отзыва"])==set(new["ID отзыва"])
-    e.check_baseline()
+def test_original_files_and_history_archive():
+    assert len(e.check_baseline()['protected_files_sha256'])==14
+    manifest=e.read_json(e.DATA/'history/manifest.json')
+    with zipfile.ZipFile(e.DATA/'history/stage3_snapshot.zip') as archive:
+        for name,digest in manifest['files_sha256'].items():
+            assert hashlib.sha256(archive.read(name)).hexdigest()==digest
 
 
-def test_candidates_match_existing_summary():
-    candidates,_=e.prepare_candidates()
-    assert len(candidates)==15
-    assert candidates.positive.sum()>0
-    row=candidates.set_index("normalized_flavor").loc["Томатная"]
-    assert row.positive==6 and row.strict_positive==1 and row.unique_venues==1
-    row=candidates.set_index("normalized_flavor").loc["Клюква"]
-    assert row.positive==0
-    assert (candidates[["positive","negative","mixed","neutral","mention_only"]].sum(axis=1)==candidates.unique_events).all()
+def test_saved_tables_and_report_come_from_current_inputs():
+    manifest=e.read_json(e.OUT/'run_manifest.json')
+    for name,digest in manifest['inputs_sha256'].items():
+        assert hashlib.sha256((e.DATA/name).read_bytes()).hexdigest()==digest
+    for name,digest in manifest['outputs_sha256'].items():
+        assert hashlib.sha256((e.OUT/name).read_bytes()).hexdigest()==digest
+    for name,digest in manifest['rendered_files_sha256'].items():
+        assert hashlib.sha256((e.ROOT/name).read_bytes()).hexdigest()==digest
 
 
-def test_menu_constraints_and_procurement_conservation():
-    config=e.read_config()
-    summary=json.loads((e.OUT/"summary.json").read_text())
-    roles=pd.read_csv(e.DATA/"candidate_roles.csv").set_index("candidate_id")
-    for menu in summary["menus"].values():
-        selected=menu["selected"]
-        assert len(set(selected))==10
-        assert len(set(selected)&set(config["premium_pool"]))==2
-        assert menu["expensive_specific_recipes"]<=2
-        assert set(config["required_primary_roles"]).issubset(roles.loc[selected,"primary_role"])
-        assert menu["purchase_cash_rub"]==pytest.approx(menu["consumed_cost_rub"]+menu["leftover_value_rub"])
-    assert "C07" in summary["menus"]["C"]["selected"]
-    assert len({tuple(x["selected"]) for x in summary["menus"].values()})==4
-    assert summary["recipes_with_measured_yield"]==0
-    p=pd.read_csv(e.OUT/"procurement.csv")
-    assert (p.packages%1==0).all() and p.leftover_base_quantity.ge(-1e-8).all()
-    np.testing.assert_allclose(p.purchase_cash_rub,p.consumed_cost_rub+p.leftover_value_rub)
-
-
-def test_scenarios_are_not_sales_and_shocks_are_monotonic():
-    s=pd.read_csv(e.OUT/"price_scenarios.csv")
-    assert s.sales_status.eq("scenario_not_observed").all()
-    assert s.loc[s.price_pair.eq(0)&s.scenario.eq("low"),"weighted_price_rub"].eq(235).all()
-    t=pd.read_csv(e.OUT/"sensitivity.csv")
-    base=t[t.scenario.eq("base")].set_index(["menu","candidate_id"]).cost_50ml_rub
-    shock=t[t.scenario.eq("price_plus_20")].set_index(["menu","candidate_id"]).cost_50ml_rub
-    np.testing.assert_allclose(shock.loc[base.index],base*1.2)
-
-
-def test_notebook_and_key_report_numbers():
-    nb=json.loads((ROOT/"assortment_economics.ipynb").read_text())
-    cells=[c for c in nb["cells"] if c["cell_type"]=="code"]
-    assert [c["execution_count"] for c in cells]==list(range(1,len(cells)+1))
-    assert not any(o["output_type"]=="error" for c in cells for o in c["outputs"])
-    for c in cells:compile("".join(c["source"]),"notebook_cell","exec")
-    text=(ROOT/"README.md").read_text()
-    for value in ["16 993", "17 009", "18 311", "20%", "235", "265"]:
-        assert value in text
-
-
-def test_frozen_baseline_and_b2_tradeoffs():
-    old=json.loads((e.DATA/"stage1_baseline.json").read_text())
-    new=json.loads((e.OUT/"summary.json").read_text())["menus"]
-    for name in ["A","B","C"]:
-        assert new[name]["selected"]==old["menus"][name]["selected"]
-    b,b2=new["B"],new["B2"]
-    assert set(b2["selected"])-set(b["selected"])=={"C02","C13"}
-    assert b2["classic_count"]>b["classic_count"]
-    assert b2["strong_overlap_pairs"]<b["strong_overlap_pairs"]
-    assert b2["purchase_cash_rub"]>b["purchase_cash_rub"]
-    assert b2["consumed_cost_rub"]<b["consumed_cost_rub"]
-    assert b2["strict_event_count"]<b["strict_event_count"]
-    assert b2["high_risk_leftover_value_rub"]>b["high_risk_leftover_value_rub"]
-
-
-def test_similarity_does_not_impute_sensory_values():
-    cfg=e.read_config();c,f=e.prepare_candidates();i=e.load_ingredients(cfg);r,q=e.recipe_tables(c,i,cfg)
-    pairs=e.flavor_pairs(c,q,i).set_index(["candidate_a","candidate_b"])
-    assert len(pairs)==15*14/2 and pairs.index.is_unique
-    assert pairs.loc[("C01","C10"),"review_flag"]=="strong"
-    assert pairs.loc[("C03","C12"),"review_flag"]=="strong"
-    assert pairs.loc[("C09","C11"),"review_flag"]=="moderate"
-    # Общие водка/сахар не дают ароматического пересечения вишне и лимончелло.
-    assert pairs.loc[("C02","C04"),"nonuniversal_ingredient_jaccard"]==0
-    assert pairs.loc[("C02","C04"),"review_flag"]=="none"
-    assert pairs.sweetness_comparison.eq("unknown").all()
-    assert not pairs.sensory_similarity_measured.any()
-
-
-def test_all_inputs_audited_without_unsupported_upgrade():
-    recipes=pd.read_csv(e.DATA/"recipe_audit.csv")
-    prices=pd.read_csv(e.DATA/"ingredient_audit.csv")
-    assert len(recipes)==15 and recipes.candidate_id.is_unique
-    assert len(prices)==21 and prices.ingredient_id.is_unique
-    assert recipes.yield_status.eq("assumed_unmeasured").all()
-    assert recipes.shelf_life_days.isna().all()
-    assert recipes.shelf_life_status.eq("not_established").all()
-    assert recipes.final_abv_status.eq("unknown_not_calculated").all()
-    assert recipes.composition_status.value_counts().to_dict()=={"model_only":7,"model_adaptation":4,"published_quantities":4}
-    h=prices.set_index("ingredient_id").loc["horseradish"]
-    assert (h.current_price_rub,h.current_quantity,h.current_unit)==(900,500,"g")
-    assert prices.loc[prices.ingredient_id.eq("cream"),"current_unit"].item()=="ml"
-    assert prices.loc[prices.ingredient_id.eq("cream_cheese"),"current_price_rub"].item()==248
-    assert prices.loc[prices.ingredient_id.eq("basil"),"order_unit_status"].item()=="approximate_weight_step"
-
-
-def test_joint_evidence_coverage_uses_event_union():
-    ev=pd.read_csv(e.OUT/"candidate_evidence.csv")
-    m=pd.read_csv(e.OUT/"menu_summary.csv").set_index("menu").loc["B2"]
-    selected=m.selected.split("|");part=ev[ev.candidate_id.isin(selected)]
-    assert m.verified_event_count==part.event_key.nunique()
-    assert m.verified_mentions_rows==len(part)
-    assert m.verified_event_count<m.verified_mentions_rows
-    assert m.strict_event_count==part[part.strict_flag.eq(1)].event_key.nunique()
-
-
-def test_legacy_weights_are_sensitivity_not_b2_selection():
-    w=pd.read_csv(e.OUT/"legacy_weight_sensitivity.csv")
-    assert len(w)==81
-    cols=["review_weight","diversity_weight","sharing_weight","cash_weight"]
-    np.testing.assert_allclose(w[cols].sum(axis=1),1)
-    assert w[cols].min().min()>=.1 and w[cols].max().max()<=.6
-    assert w.method.str.contains("legacy").all()
+def test_clean_generation_uses_inputs_without_saved_results(tmp_path):
+    target=tmp_path/'fresh_results'
+    assert not target.exists()
+    result=e.run(render=False,out=target)
+    assert e.money(result['purchase_cost_rub'])==D('40002.80')
+    for name in e.read_json(e.OUT/'run_manifest.json')['outputs_sha256']:
+        assert (target/name).read_bytes()==(e.OUT/name).read_bytes(),name

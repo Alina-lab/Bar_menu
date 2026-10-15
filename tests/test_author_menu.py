@@ -1,113 +1,106 @@
-"""Точное авторское поручение, независимость от отбора и материальная арифметика."""
-
+"""Контракт автора и пересчёт через редактируемые данные, без изменения Python."""
 import copy
+import csv
+import hashlib
 import json
+import shutil
 
-import numpy as np
-import pandas as pd
 import pytest
-
-from scripts import author_menu as a
 from scripts import economics as e
 
 
-def test_exact_author_selection_and_prices():
-    m = a.load_author_menu()
-    assert set(m.candidate_id) == {"C01","C02","C03","C04","C05","C09","C13","C14","C06","C12"}
-    assert m.tier.value_counts().to_dict() == {"basic":8,"premium":2}
-    assert m.price_50ml_rub.mean() == 260
-    assert "C14" in set(m.candidate_id)  # Ноль положительных отзывов не исключает клюкву.
+@pytest.fixture
+def data(tmp_path):
+    folder=tmp_path/'inputs';folder.mkdir()
+    for p in e.DATA.iterdir():
+        if p.is_file():shutil.copyfile(p,folder/p.name)
+    return folder
 
 
-@pytest.mark.parametrize("change",["replace","tier","price","duplicate","name","status"])
-def test_corrupt_author_input_fails_without_repair(tmp_path, change):
-    m = a.load_author_menu()
-    if change == "replace":m.loc[0,"candidate_id"]="C10"
-    if change == "tier":m.loc[0,"tier"]="premium"
-    if change == "price":m.loc[0,"price_50ml_rub"]=230
-    if change == "duplicate":m.loc[0]=m.loc[1]
-    if change == "name":m.loc[0,"normalized_flavor"]="Иной вкус"
-    if change == "status":m.loc[0,"selection_status"]="optimized"
-    path=tmp_path/"menu.csv";m.to_csv(path,index=False)
-    with pytest.raises(ValueError):a.load_author_menu(path)
+def save_csv(path,rows):
+    with path.open('w',newline='') as f:
+        w=csv.DictWriter(f,fieldnames=rows[0]);w.writeheader();w.writerows(rows)
 
 
-def test_legacy_optimizer_cannot_change_author_results(monkeypatch,tmp_path):
-    config=e.read_config();ingredients=e.load_ingredients(config);menu=a.load_author_menu()
-    before,_=a.evaluate_items(menu,ingredients,config)
-    changed=copy.deepcopy(config)
-    changed.update(premium_pool=["C01"],basic_price_rub=1,premium_price_rub=2,menu_size=99,
-                   balanced_weights={"review_evidence":1,"diversity":0,"sharing":0,"cash":0},
-                   max_per_primary_role=0,author_anchor_candidates=["C07"])
-    def forbidden(*args,**kwargs):raise AssertionError("Авторское меню не должно вызывать отбор")
-    monkeypatch.setattr(e,"select_menus",forbidden)
-    monkeypatch.setattr(e,"fixed_and_reviewed_menus",forbidden)
-    monkeypatch.setattr(e,"read_config",lambda:changed)
-    monkeypatch.setattr(e,"OUT",tmp_path)
-    monkeypatch.setattr(e,"FIG",tmp_path/"figures")
-    result=a.run()
-    after=pd.read_csv(tmp_path/"author_items.csv").set_index("candidate_id")
-    assert set(result["selected_ids"])==set(menu.candidate_id)
-    np.testing.assert_allclose(after.loc[before.index,"cost_50ml_rub"],before.cost_50ml_rub)
-    np.testing.assert_allclose(after.loc[before.index,"price_50ml_rub"],before.price_50ml_rub)
+def test_all_author_doses_and_yields(data):
+    menu,r,y,prices,plan=e.load_inputs(data)
+    assert r['C01']['ingredients']=={'vodka':500,'horseradish':95,'ginger':15,'honey':10}
+    assert r['C01']['ingredient_ranges']['horseradish']=={'min_g':90,'max_g':100,'economic_choice':'midpoint'}
+    assert r['C02']['ingredients']=={'vodka':500,'cherry':250,'sugar':250}
+    assert 'без косточек' in prices['cherry']['name']
+    assert r['C03']['ingredients']=={'vodka':500,'raspberry':300,'sugar':200}
+    assert r['C04']['ingredients']=={'vodka':1000,'lemon':1900,'sugar':500}
+    assert 'water' not in prices and 'water' not in r['C04']['ingredients']
+    assert r['C05']['ingredients']=={'vodka':500,'sorrel':100,'honey':100}
+    assert r['C06']['ingredients']=={'vodka':500,'halva':600,'honey':90}
+    assert r['C09']['ingredients']=={'vodka':500,'apple':525,'basil':15,'sugar':80}
+    assert 'свежие' in prices['apple']['name'].lower()
+    assert r['C12']['ingredients']=={'vodka':300,'raspberry':300,'cream':150,'milk':150,'sugar':100}
+    assert r['C13']['ingredients']=={'vodka':500,'sea_buckthorn':500,'sugar':100}
+    assert r['C14']['ingredients']=={'vodka':500,'cranberry':400,'sugar':150}
+    expected={'C01':470,'C02':690,'C03':680,'C04':1500,'C05':530,'C06':450,'C09':650,'C12':700,'C13':720,'C14':670}
+    assert {key:int(row['yield_ml']) for key,row in y.items()}==expected
+    assert all(row['yield_status']=='estimated' for row in y.values())
+    assert all(prices[i]['supplier']=='METRO' for i in ['lemon','sorrel','basil'])
+    assert len(prices)==16 and set(x['supplier'] for x in prices.values())=={'Ладога','METRO','Агропарк СПб'}
 
 
-def test_shared_raspberry_uses_one_package_and_same_consumption_cost():
-    share=pd.read_csv(e.OUT/"author_sharing.csv")
-    r=share[(share.ingredient_id=="raspberry")&(share.ready_liters_per_recipe==1)].iloc[0]
-    assert r.candidate_ids=="C03|C12"
-    assert r.joint_packages==1 and r.separate_packages==2
-    assert r.purchase_saving_rub==838 and r.consumed_cost_saving_rub==0
-    r5=share[(share.ingredient_id=="raspberry")&(share.ready_liters_per_recipe==5)].iloc[0]
-    assert r5.purchase_saving_rub==0
+@pytest.mark.parametrize('field,value',[('candidate_id','C10'),('tier','premium'),('price_50ml_rub','330'),('normalized_flavor','Вишня'),('selection_status','optimized')])
+def test_author_menu_changes_fail(data,field,value):
+    path=data/'author_selected_menu.csv';rows=e.read_csv(path);rows[0][field]=value;save_csv(path,rows)
+    with pytest.raises(ValueError):e.load_inputs(data)
 
 
-def test_author_procurement_conservation_and_full_matrix():
-    q=pd.read_csv(e.OUT/"author_ingredient_matrix.csv",index_col="candidate_id")
-    p=pd.read_csv(e.OUT/"author_procurement.csv");p=p[p.menu.eq("AUTHOR")].set_index("ingredient_id")
-    assert q.shape==(10,21)
-    np.testing.assert_allclose(q.sum().loc[p.index],p.needed_base_quantity)
-    np.testing.assert_allclose(p.purchase_cash_rub,p.consumed_cost_rub+p.leftover_value_rub)
-    assert p.packages.mod(1).eq(0).all() and p.leftover_base_quantity.ge(0).all()
-    assert "ml" == p.loc["cream","base_unit"]
+@pytest.mark.parametrize('field,value',[('pack_price_rub','0'),('pack_price_rub','NaN'),('pack_size_base','-1'),('base_unit','kg'),('price_per_base_unit_rub','1')])
+def test_bad_price_and_units_rejected(data,field,value):
+    path=data/'ingredients.csv';rows=e.read_csv(path);rows[0][field]=value;save_csv(path,rows)
+    with pytest.raises(ValueError):e.load_inputs(data)
 
 
-def test_author_sales_scenarios_and_premium_not_cost_rank():
-    s=pd.read_csv(e.OUT/"author_price_scenarios.csv");s=s[s.menu.eq("AUTHOR")].sort_values("premium_sales_share")
-    np.testing.assert_allclose(s.weighted_price_50ml_rub,[252.5,260,267.5])
-    assert s.sales_status.eq("scenario_not_observed").all()
-    r=pd.read_csv(e.OUT/"author_items.csv").set_index("candidate_id")
-    assert r.loc["C06","cost_50ml_rub"]<r.loc["C05","cost_50ml_rub"]
-    assert r.loc["C12","cost_50ml_rub"]<r.loc["C03","cost_50ml_rub"]
-    assert r.final_abv_pct.isna().all() and r.shelf_life_days.isna().all()
+def test_missing_ingredient_price_does_not_become_zero(data):
+    path=data/'ingredients.csv';rows=e.read_csv(path);save_csv(path,[r for r in rows if r['ingredient_id']!='milk'])
+    with pytest.raises(ValueError,match='Нет цены'):e.load_inputs(data)
 
 
-def test_stress_losses_are_recomputed_and_prices_are_fixed():
-    t=pd.read_csv(e.OUT/"author_item_stress.csv").set_index(["candidate_id","scenario"])
-    for cid in a.load_author_menu().candidate_id:
-        base=t.loc[(cid,"base")]
-        assert t.loc[(cid,"price_plus_20"),"cost_50ml_rub"]==pytest.approx(base.cost_50ml_rub*1.2)
-        assert t.loc[(cid,"loss_plus_10pp"),"cost_50ml_rub"]==pytest.approx(base.cost_50ml_rub*(1-base.loss_fraction_assumed)/(1-base.loss_fraction_assumed-.1))
-        assert t.loc[(cid,"loss_plus_10pp"),"ready_ml"]<base.ready_ml
-    s=pd.read_csv(e.OUT/"author_menu_stress.csv")
-    assert len(s)==12
-    assert s.sales_status.eq("scenario_not_observed").all()
-    assert s.loc[s.premium_sales_share.eq(.2),"weighted_price_50ml_rub"].eq(260).all()
+def test_measured_yield_updates_every_required_quantity_without_code_edit(data,tmp_path):
+    before=e.calculate(e.load_inputs(data));code_digest=hashlib.sha256((e.ROOT/'scripts/economics.py').read_bytes()).hexdigest()
+    path=data/'yields.csv';rows=e.read_csv(path)
+    for row in rows:
+        if row['candidate_id']=='C06':row.update(yield_ml='400',yield_status='measured',measurement_note='Искусственное значение только для теста механизма ввода')
+    save_csv(path,rows)
+    after=e.calculate(e.load_inputs(data))
+    old=next(r for r in before[0] if r['candidate_id']=='C06');new=next(r for r in after[0] if r['candidate_id']=='C06')
+    assert new['target_ready_ml']==6000 and new['yield_status']=='measured'
+    assert new['scale_factor']==15
+    assert new['cost_50ml_rub']>old['cost_50ml_rub']
+    assert next(r for r in after[2] if r['ingredient_id']=='halva')['packs_to_buy']==36
+    assert next(r for r in after[2] if r['ingredient_id']=='vodka')['needed_quantity']>next(r for r in before[2] if r['ingredient_id']=='vodka')['needed_quantity']
+    assert hashlib.sha256((e.ROOT/'scripts/economics.py').read_bytes()).hexdigest()==code_digest
+    result=e.run(render=False,data=data,out=tmp_path/'output')
+    assert not result['all_initial_yields_estimated'] and result['total_ready_ml']==60000
 
 
-def test_unknown_delivery_is_not_free():
-    s=pd.read_csv(e.OUT/"author_suppliers.csv")
-    assert s.delivery_cost_rub.isna().all()
-    assert s.delivery_low_rub.isna().sum()==4
-    assert s.set_index("supplier").loc["ФрутСтар","delivery_low_rub"]==700
-    c=pd.read_csv(e.OUT/"author_comparison.csv").set_index("menu")
-    assert c.loc["AUTHOR","two_supplier_delivery_low_rub"]==1200
-    assert c.loc["AUTHOR","two_supplier_delivery_high_rub"]==1400
-    assert c.loc["AUTHOR","unknown_delivery_supplier_count"]==4
+def test_measured_yield_without_measurement_note_rejected(data):
+    path=data/'yields.csv';rows=e.read_csv(path);rows[0]['yield_status']='measured';save_csv(path,rows)
+    with pytest.raises(ValueError):e.load_inputs(data)
 
 
-def test_historical_result_files_unchanged():
-    import hashlib
-    frozen=json.loads((e.DATA/"stage2_baseline.json").read_text())
-    for path,sha in frozen["protected_stage2_sha256"].items():
-        assert hashlib.sha256((e.ROOT/path).read_bytes()).hexdigest()==sha,path
+def test_old_optimizer_inputs_have_no_effect_on_current_model(data):
+    before=e.calculate(e.load_inputs(data))
+    (data/'config.json').write_text(json.dumps({'premium_pool':['C10'],'basic_price_rub':1,'starting_output_ml_per_recipe':7000,'balanced_weights':{'cash':1}}))
+    after=e.calculate(e.load_inputs(data))
+    assert before==after
+
+
+def test_main_plan_cannot_silently_become_seven_liters(data):
+    path=data/'production_plan.json';plan=json.loads(path.read_text());plan['servings_per_flavor_per_evening']=70;path.write_text(json.dumps(plan))
+    with pytest.raises(ValueError,match='Основной план'):e.load_inputs(data)
+
+
+def test_current_notebook_executed_without_error():
+    nb=json.loads((e.ROOT/'assortment_economics.ipynb').read_text());cells=[c for c in nb['cells'] if c['cell_type']=='code']
+    assert [c['execution_count'] for c in cells]==list(range(1,len(cells)+1))
+    assert not any(o['output_type']=='error' for c in cells for o in c['outputs'])
+    source='\n'.join(''.join(c['source']) for c in cells)
+    assert 'result = e.run()' in source
+    assert 'history/stage3_snapshot' not in source  # Исторический код не исполняется.

@@ -1,0 +1,35 @@
+{
+  "inputs_sha256": {
+    "yields.csv": "fc2736a0f797be14012f85c54de134b462b822406cfd5ce9347cabb34e8f0c91",
+    "ingredients.csv": "4d6858ebdd909e4081bf1c8dd5356cc19dcab3115bf86e140de8bc337cece2b1",
+    "production_plan.json": "0da7166e8dd7f2a0bda105eed0252a5b9a48b7d565bbeceb4bd38541f9991548",
+    "recipes.json": "3993855672b1dc273377fe32ca60878bccdfec3eb9b44cf26ab97f6dbe222124",
+    "author_selected_menu.csv": "95567a910c58e6aa12a02fea2c2126420dc1881c272868f55ef2c57cd0c4b6ee",
+    "source_baseline.json": "ebe2c5fa719a1c86fd1da02364c3566df833e90229577f0339b4003683d36a43"
+  },
+  "outputs_sha256": {
+    "sales_scenarios.csv": "33b9e5471e4007615c7627fec9d99b58ad72d00cf7a05834eac6d16c5c10fc9c",
+    "summary.json": "7b6d38fe9e41781d509eefeec9bfef7f4d76d44b45f31bbe675dd8aca025c4af",
+    "premium_mix.csv": "0c263d59757ee86a97fca2a90dc51255181409cf7866156ba368be2533834a70",
+    "recipe_costs.csv": "bed35aec777354670f5f0a6ede73ed6374b5c174701a3ed46c03f1304cf8cf42",
+    "yield_sensitivity.csv": "246bd2294b5988600bdc926dd7d3e1641ca00068ede42d2d40825acb158be07b",
+    "ingredient_matrix.csv": "8d79fcc30380f24cfeac3b7691f246675cd9f77474041d889f7f9e3b5a2dda21",
+    "recipe_ingredients.csv": "473f9eae540aa92219bcaf614f72cf8a1e1233055857c2cb8cbeeea666b44cb8",
+    "price_sensitivity.csv": "0ad002b6cb281df45bbb8992bd923116cab031d669f1fa189d0623bd70e753da",
+    "production_calendar.csv": "e1ddb2393470bf48806121ad349a6604547c5f11d9f232e234d7a74c180c0984",
+    "procurement.csv": "20bf1ba4550291af79bfa50ec5d402815e09d74a9f0f85cf98f3ed41061e002b",
+    "suppliers.csv": "55f9537db8c1f27781aea09eb4305e707e622009d2cdc1a8d013bb1a5466c93f"
+  },
+  "rendered_files_sha256": {
+    "README.md": "5bcd118e1754b1cecc9bc40deee1370d692b9c5de8a7de391895d4bb77aa33a4",
+    "docs/economics_report.md": "ea304326d237fee858feb0c57667820c876afbac0189f6cdac02cdbe494e562f",
+    "docs/economics_methodology.md": "ccc024778178c9d3f4d891953e02951b796a2b4b7a062c391720058d2a559669",
+    "docs/project_plan.md": "ca7aef7a6604fa7b34d20fc5d08bca879d19cfece9fecb74a65b0c265bcae80e",
+    "figures/economics/cost_50ml.png": "3925f3a71877b6eef5bf83a9b8724002018717f1caefec7e7e3e353159c3bcb4",
+    "figures/economics/cost_6l.png": "c85a17b01a2ff89e9392d87291640c7a4fda2e6cb0fe53e8308f59afff0bf00f",
+    "figures/economics/production_calendar.png": "e2a2b9120d920071dd4d3455626bc7d8fdf195eca140b5a14807bece477a6f54",
+    "figures/economics/sell_through.png": "757c7406c3b710f4a7e5d1937a8c7b349e160483370ce5cc73eb0790a644f53d",
+    "figures/economics/supplier_budget.png": "7a2f944509e87836a34ba528fd7e639a128458ef30a386db2016be080484f813",
+    "figures/economics/used_vs_purchased.png": "690f0742d944f3cbad3e0bf72400cbaa33a2459390de3d214148d26ece70cb5a"
+  }
+}
