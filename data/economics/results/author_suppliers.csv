@@ -1,0 +1,7 @@
+supplier,goods_cash_rub,checked_at,min_order_rub,delivery_low_rub,delivery_high_rub,free_delivery_threshold_rub,free_delivery_scope,source_url,conditions,passes_known_minimum,delivery_cost_rub,delivery_status
+АкваБалт,142.0,2026-10-15,,,,,unknown,https://aquabalt.ru/catalog/k-chayu/saharnyy-pesok--1-kg,Цена товара опубликована; минимальная сумма и тариф всей заявки не установлены,unknown,,unknown_not_zero
+ВкусВилл,1149.0,2026-10-15,,,,,address_not_selected,https://vkusvill.ru/goods/slivki-10-1225/,Адрес не выбран; показанные способы доставки не подтверждают условия конкретного заказа,unknown,,unknown_not_zero
+Дарим Лето,2573.0,2026-10-15,500.0,500.0,700.0,5000.0,red_zone_only,https://darim-leto.ru/dostavka,Красная зона 500 ₽; синяя 600 ₽; зелёная 700 ₽; бесплатно от 5000 ₽ только красная зона; адрес неизвестен,yes,,published_conditional_bounds
+Декантер СПб,11616.0,2026-10-15,,,,,unknown,https://spb.decanter.ru/vodka/05-l,Розничная котировка; наличие уточнить; доставка или самовывоз требуют согласования,unknown,,unknown_not_zero
+Мультифрукт СПб,900.0,2026-10-15,,,,,unknown,https://multifrukt-spb.ru/products/246,Единица продажи хрена 500 г; минимум заявки и доставка не установлены,unknown,,unknown_not_zero
+ФрутСтар,617.0,2026-10-15,,700.0,700.0,5000.0,city_all,https://frutstar.ru/delivery,Городской тариф до 5000 ₽; при достижении порога бесплатно; область по согласованию,unknown,,published_conditional_bounds

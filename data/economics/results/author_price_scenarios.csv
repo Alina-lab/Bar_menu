@@ -1,0 +1,10 @@
+menu,premium_sales_share,simple_menu_price_rub,weighted_price_50ml_rub,weighted_cost_50ml_rub,material_margin_50ml_rub,material_margin_fraction,sales_status,within_tier_distribution
+AUTHOR,0.05,260.0,252.5,72.86797137786549,179.6320286221345,0.7114139747411268,scenario_not_observed,equal_assumption
+AUTHOR,0.2,260.0,260.0,72.05849194617547,187.94150805382452,0.7228519540531713,scenario_not_observed,equal_assumption
+AUTHOR,0.35,260.0,267.5,71.2490125144854,196.2509874855146,0.7336485513477181,scenario_not_observed,equal_assumption
+B2,0.05,250.0,235.0,70.42176643452451,164.5782335654755,0.7003329087892575,scenario_not_observed,equal_assumption
+B2,0.2,250.0,250.0,69.99852988862516,180.00147011137483,0.7200058804454993,scenario_not_observed,equal_assumption
+B2,0.35,250.0,265.0,69.57529334272579,195.4247066572742,0.7374517232349971,scenario_not_observed,equal_assumption
+B2_at_author_prices,0.05,260.0,252.5,70.42176643452451,182.0782335654755,0.721101915110794,scenario_not_observed,equal_assumption
+B2_at_author_prices,0.2,260.0,260.0,69.99852988862516,190.00147011137483,0.7307748850437493,scenario_not_observed,equal_assumption
+B2_at_author_prices,0.35,260.0,267.5,69.57529334272579,197.9247066572742,0.739905445447754,scenario_not_observed,equal_assumption

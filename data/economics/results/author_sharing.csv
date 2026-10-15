@@ -1,0 +1,5 @@
+ingredient_id,ready_liters_per_recipe,scenario_status,needed_base_quantity,base_unit,candidate_ids,joint_packages,separate_packages,purchase_saving_rub,consumed_cost_saving_rub,unit_price_discount
+honey,1,main_basis,354.697411252809,g,C01|C05|C06,2,3,274,0.0,False
+raspberry,1,main_basis,845.8646616541353,g,C03|C12,1,2,838,0.0,False
+honey,5,rounding_illustration_not_production_plan,1773.487056264045,g,C01|C05|C06,9,11,548,0.0,False
+raspberry,5,rounding_illustration_not_production_plan,4229.3233082706765,g,C03|C12,5,5,0,0.0,False
