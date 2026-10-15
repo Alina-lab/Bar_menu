@@ -1,0 +1,112 @@
+﻿source_id,batch,venue_id,url,checked_at,purpose,result,records_scanned,note
+S001,batch_01,V001,https://ostanovochka.ru/,2026-10-14,venue,accessible,,"На сайте заявлены настойки, но HTML-меню содержит еду; барный PDF ещё не прочитан."
+S002,batch_01,V001,https://www.restoclub.ru/spb/place/tvoja-ostanovochka/opinions,2026-10-14,reviews,accessible,10,
+S003,batch_01,V002,https://bar-tvoya-ostanovochka.ru/,2026-10-14,venue,accessible,,HTML-меню ссылается на барный PDF; отдельные позиции пока не проверены.
+S004,batch_01,V002,https://www.restoclub.ru/spb/place/tvoja-ostanovochka-1/opinions,2026-10-14,reviews,accessible,6,Для четырёх отзывов площадка показывает непрохождение собственной верификации; это отдельно сохранено.
+S005,batch_01,V004,https://yandex.com/maps/org/kasseta/26618441479/,2026-10-14,venue,accessible,,Карточка работает; старые цены 2ГИС не перепроверены; точность соответствия лит. У и к16 требует отдельной сверки.
+S006,batch_01,V004,https://yandex.com/maps/org/cassetta_bar/26618441479/reviews/,2026-10-14,reviews,accessible,32,
+S007,batch_01,V004,https://2gis.ru/spb/firm/70000001110212923/tab/prices,2026-10-14,menu,unavailable,,Веб-инструмент недоступен; прямой HTTP к 2ГИС отвечает 403. Не обходили ограничения.
+S008,batch_01,V003,https://bloodymarybar.ru/menu-html/,2026-10-14,venue,accessible,,Актуальный HTML раздел Авторские настойки: 17 позиций по 250 руб.; объём не указан.
+S009,batch_01,V003,https://bloodymarybar.ru/menu-html/,2026-10-14,menu,accessible,17,
+S010,batch_01,V003,https://yandex.com/maps/org/bloody_mary_bar_grill/1758744406/reviews/,2026-10-14,reviews,accessible,,В видимых отзывах преобладают коктейли. Алкогольный щавелевый комплимент не назван настойкой; не добавлен в рецептурный датасет.
+S011,batch_01,V005,https://tsatsa-spb.ru/,2026-10-14,venue,accessible,,На странице меню явно заявлены настойки; подробная карта не извлекается как текст.
+S012,batch_01,V005,https://yandex.com/maps/org/tsatsa/47817580411/reviews/,2026-10-14,reviews,accessible,50,Открытая первая страница. Год в большинстве дат не показан; оставлен пустым.
+S013,batch_02,V006,https://www.restoclub.ru/spb/place/room-13-1/opinions,2026-10-14,venue,accessible,,"Исправлена ссылка: room-13 относится к архивной локации, room-13-1 — к Маяковского. Карта на сайте датирована 2023, актуальность позиций не доказана."
+S014,batch_02,V006,https://www.restoclub.ru/spb/place/room-13-1/opinions,2026-10-14,reviews,accessible,10,
+S015,batch_02,V007,https://mama-tata.ru/bar,2026-10-14,venue,accessible,,На общем сайте сети прямо указаны 15 собственных настоек и этот филиал; цены находятся в изображении.
+S016,batch_02,V007,https://www.restoclub.ru/spb/place/mama-tata-1/opinions,2026-10-14,reviews,accessible,10,
+S017,batch_02,V008,https://spb.evgenich.bar/menu,2026-10-14,venue,accessible,,Сайт явно представляет домашние настойки в меню; карта встроена из Google Drive. Филиал на Рубинштейна не объединялся.
+S018,batch_02,V008,https://www.restoclub.ru/spb/place/evgenich-1/opinions,2026-10-14,reviews,accessible,10,
+S019,batch_02,V009,https://www.restoclub.ru/spb/place/brimborium,2026-10-14,venue,accessible,,Действующая карточка и расписание. Меню агрегатора ещё не перепроверено по первичной карте.
+S020,batch_02,V009,https://yandex.com/maps/org/brimborium/1230263737/reviews/?page=2,2026-10-14,reviews,accessible,,Прочитана доступная страница. Совпадающий текст от 27.09.2024 найден также на Restoclub: сохранена одна запись.
+S021,batch_02,V009,https://www.restoclub.ru/spb/place/brimborium/opinions,2026-10-14,reviews,accessible,,Один точный межплощадочный дубль с Яндексом от 27.09.2024; вторую строку не добавляли.
+S022,batch_02,V010,https://ippolit.spb.ru/,2026-10-14,venue,accessible,,"Угловое здание; адреса источников отличаются. На официальном сайте настойки заявлены, подробная карта пока не прочитана."
+S023,batch_02,V010,https://www.restoclub.ru/spb/place/ippolit/opinions,2026-10-14,reviews,accessible,10,
+S024,audit_legacy_01,V031,https://www.restoclub.ru/spb/place/sajgon-1/opinions,2026-10-14,venue,accessible,,Подтверждение карточки и старого отзыва; актуальная карта настоек не прочитана.
+S025,audit_legacy_01,V032,https://www.restoclub.ru/spb/place/guggenheim/opinions,2026-10-14,venue,accessible,,У R008 восстановлена дата 01.09.2024.
+S026,audit_legacy_01,V034,https://2gis.ru/spb/firm/70000001082886607/tab/reviews,2026-10-14,venue,accessible,,"Доступное представление 2ГИС содержит пометку временного закрытия; веб-версия получена из кэша, свежесть статуса ограничена."
+S027,audit_legacy_01,V036,https://2gis.ru/spb/firm/5348553839006009/tab/reviews,2026-10-14,venue,accessible,,Доступно публичное представление отзывов; исходные даты не показаны.
+S028,audit_legacy_01,V043,https://www.restoclub.ru/spb/place/room-13/opinions,2026-10-14,venue,accessible,,На странице явная пометка «Заведение закрыто». Отзывы не переносятся на Маяковского.
+S029,audit_legacy_01,V031,https://www.restoclub.ru/spb/place/sajgon-1/opinions,2026-10-14,reviews,accessible,,"Сверка записей v1; даты/ID не догадками, а только по доступному тексту."
+S030,audit_legacy_01,V032,https://www.restoclub.ru/spb/place/guggenheim/opinions,2026-10-14,reviews,accessible,,"Сверка записей v1; даты/ID не догадками, а только по доступному тексту."
+S031,audit_legacy_01,V034,https://2gis.ru/spb/firm/70000001082886607/tab/reviews,2026-10-14,reviews,accessible,,"Сверка записей v1; даты/ID не догадками, а только по доступному тексту."
+S032,audit_legacy_01,V036,https://2gis.ru/spb/firm/5348553839006009/tab/reviews,2026-10-14,reviews,accessible,,"Сверка записей v1; даты/ID не догадками, а только по доступному тексту."
+S033,audit_legacy_01,V043,https://www.restoclub.ru/spb/place/room-13/opinions,2026-10-14,reviews,accessible,,"Сверка записей v1; даты/ID не догадками, а только по доступному тексту."
+S034,audit_legacy_02,V016,https://www.restoclub.ru/spb/place/starye-koni/opinions,2026-10-14,venue,accessible,,"Два отзыва 01.10.2024 описывают посещение 30.09; тексты разные, общий event_group."
+S035,audit_legacy_02,V016,https://www.restoclub.ru/spb/place/starye-koni/opinions,2026-10-14,reviews,accessible,,"Два отзыва 01.10.2024 описывают посещение 30.09; тексты разные, общий event_group."
+S036,audit_legacy_02,V033,https://www.restoclub.ru/spb/place/bratcy-kebabcy-1/opinions,2026-10-14,venue,accessible,,Настойки в отзыве 2025 года подтверждены; актуальные цены ещё не изучены.
+S037,audit_legacy_02,V033,https://www.restoclub.ru/spb/place/bratcy-kebabcy-1/opinions,2026-10-14,reviews,accessible,,Настойки в отзыве 2025 года подтверждены; актуальные цены ещё не изучены.
+S038,audit_legacy_02,V037,https://2gis.ru/spb/firm/70000001037921205/tab/reviews,2026-10-14,venue,accessible,,Дата и рейтинг индивидуального отзыва в доступном фрагменте не показаны.
+S039,audit_legacy_02,V037,https://2gis.ru/spb/firm/70000001037921205/tab/reviews,2026-10-14,reviews,accessible,,Дата и рейтинг индивидуального отзыва в доступном фрагменте не показаны.
+S040,audit_legacy_02,V038,https://www.restoclub.ru/spb/place/hudson/opinions,2026-10-14,venue,accessible,,"Похвала сливочным относится к категории, не отдельному вкусу."
+S041,audit_legacy_02,V038,https://www.restoclub.ru/spb/place/hudson/opinions,2026-10-14,reviews,accessible,,"Похвала сливочным относится к категории, не отдельному вкусу."
+S042,audit_legacy_02,V039,https://www.restoclub.ru/spb/place/beer-hall/opinions,2026-10-14,venue,accessible,,Карточка явно закрыта; текст отзыва 17.03.2019 в доступном представлении отсутствует.
+S043,audit_legacy_02,V039,https://www.restoclub.ru/spb/place/beer-hall/opinions,2026-10-14,reviews,accessible,,Карточка явно закрыта; текст отзыва 17.03.2019 в доступном представлении отсутствует.
+S044,audit_legacy_03,V015,https://href.ru/en/bar/zaliv,2026-10-14,reviews,accessible,,Сверка исходных отзывов.
+S045,audit_legacy_03,V035,https://2gis.ru/spb/firm/70000001022682462/tab/reviews,2026-10-14,reviews,unavailable,,HTTP 410; не обходили защиту.
+S046,audit_legacy_03,V040,https://www.restoclub.ru/spb/place/horosho-1/opinions,2026-10-14,reviews,accessible,,Сверка исходных отзывов.
+S047,audit_legacy_03,V040,https://www.restoclub.ru/spb/place/horosho-1/opinions,2026-10-14,venue,accessible,,Повторная проверка исходной записи; меню отдельно требует проверки.
+S048,audit_legacy_03,V041,https://www.restoclub.ru/spb/place/alkobufet-pelmennaja/opinions,2026-10-14,reviews,accessible,,Сверка исходных отзывов.
+S049,audit_legacy_03,V041,https://www.restoclub.ru/spb/place/alkobufet-pelmennaja/opinions,2026-10-14,venue,accessible,,Повторная проверка исходной записи; меню отдельно требует проверки.
+S050,audit_legacy_03,V042,https://2gis.ru/spb/firm/70000001026692122/tab/reviews,2026-10-14,reviews,accessible,,Сверка исходных отзывов.
+S051,audit_legacy_03,V042,https://2gis.ru/spb/firm/70000001026692122/tab/reviews,2026-10-14,venue,accessible,,Повторная проверка исходной записи; меню отдельно требует проверки.
+S052,audit_legacy_03,V015,https://www.tripadvisor.ru/Restaurant_Review-g298507-d13820984-Reviews-Zaliv-St_Petersburg_Northwestern_District.html,2026-10-14,reviews,accessible,,Прочитаны все восемь доступных публикаций; даты публикации отделены от месяцев посещения.
+S053,batch_03,V011,https://www.restoclub.ru/spb/place/bar-vitja/opinions,2026-10-14,venue,accessible,,Расписание в действующей карточке; стоимость из отзывов не подменяет актуальное меню.
+S054,batch_03,V011,https://www.restoclub.ru/spb/place/bar-vitja/opinions,2026-10-14,reviews,accessible,10,
+S055,batch_03,V012,https://ippolit.spb.ru/,2026-10-14,venue,accessible,,"Официальный сайт подтверждает работу; карта подгружается, цены пока не прочитаны."
+S056,batch_03,V012,https://www.restoclub.ru/spb/place/fedja-dich-1/opinions,2026-10-14,reviews,accessible,10,
+S057,batch_03,V013,https://www.restoclub.ru/spb/place/horovod-1,2026-10-14,venue,accessible,,Работа и адрес проверены по карточке; ассортимент по отзывам не считается актуальным меню.
+S058,batch_03,V013,https://yandex.com/maps/org/khorovod/85813194898/reviews/,2026-10-14,reviews,accessible,,"Прочитана доступная первая страница; отзывы о том, что автор только собирается попробовать настойки, не включались."
+S059,batch_03,V014,https://www.restoclub.ru/spb/place/zavod/opinions,2026-10-14,venue,accessible,,R006 ошибочно датирован 12 октября: отзыв про шишки опубликован 11 октября 2024.
+S060,batch_03,V014,https://www.restoclub.ru/spb/place/zavod/opinions,2026-10-14,reviews,accessible,10,
+S061,batch_03,V015,https://www.restoclub.ru/spb/place/zaliv,2026-10-14,venue,accessible,,Актуальная работа не подтверждена по сохранившейся карточке.
+S062,batch_03,V007,https://thb.tildacdn.com/tild3931-3435-4630-b737-363433376465/___2026_page-0002.jpg,2026-10-14,menu,accessible,15,Визуально прочитана карта. Цена каждой позиции 195 руб.; объём шота в мл не указан.
+S063,batch_04,V016,https://www.restoclub.ru/spb/place/starye-koni/opinions,2026-10-14,reviews,accessible,10,
+S064,batch_04,V017,https://www.restoclub.ru/spb/place/karabas-bar/opinions,2026-10-14,venue,accessible,,"«Закрытого типа» в отзыве означает формат входа, а не прекращение работы; расписание карточки доступно."
+S065,batch_04,V017,https://yandex.com/maps/org/karabas/120054664829/reviews/,2026-10-14,reviews,accessible,,
+S066,batch_04,V018,https://yandex.com/maps/org/laboratorio_distilita/198854469495/,2026-10-14,venue,accessible,,Дистилляты и джин на беконе не включались как настойки. Название напитка в отзыве ещё требует сверки с меню.
+S067,batch_04,V018,https://yandex.com/maps/org/laboratorio_distilita/198854469495/reviews/,2026-10-14,reviews,accessible,,
+S068,batch_04,V019,https://www.restoclub.ru/spb/place/rjumochnaja-v-butylke/opinions,2026-10-14,venue,accessible,,Филиал в Новой Голландии; отзывы о будущем намерении попробовать настойки исключены.
+S069,batch_04,V019,https://yandex.com/maps/org/ryumochnaya_v_butylke/69572754801/reviews/,2026-10-14,reviews,accessible,,
+S070,batch_04,V020,https://www.restoclub.ru/spb/place/sinichka/opinions,2026-10-14,venue,accessible,,"Синяя птица — бывшая Синичка. Адрес 12/14 расходится между карточками; нужен осмотр вывески/официальная сверка. Яндекс ID 179780085697 оказался школой, исключён."
+S071,batch_04,V020,https://www.restoclub.ru/spb/place/sinichka/opinions,2026-10-14,reviews,no_review_text,,"Карточка и расписание доступны, тела пяти заявленных отзывов не показаны."
+S072,batch_04,V020,https://yandex.com/maps/org/ryumochnaya_pelmennaya_sinichka/85632168383/reviews/,2026-10-14,reviews,unavailable,,
+S073,batch_04,V020,https://yandex.com/maps/org/sinyaya_ptica/179780085697/panorama/,2026-10-14,candidate_disambiguation,unrelated,,"Частная школа; не заведение, данные не использованы."
+S074,batch_05,V021,https://www.restoclub.ru/spb/place/boloto-bar/opinions,2026-10-14,venue,accessible,,"Настойки изучены по публичным отзывам, не по рекламным поисковым сниппетам."
+S075,batch_05,V021,https://yandex.com/maps/org/boloto/227029157922/reviews/,2026-10-14,reviews,accessible,,
+S076,batch_05,V021,https://www.restoclub.ru/spb/place/boloto-bar/opinions,2026-10-14,reviews,accessible,10,В доступном фрагменте нет релевантных текстов; продолжили на Яндексе.
+S077,batch_05,V022,https://ippolit.spb.ru/,2026-10-14,venue,accessible,,"Официальная карта прочитана: 40 мл, 295 руб.; отдельные позиции прямо названы ликёрами или биттером."
+S078,batch_05,V022,https://www.restoclub.ru/spb/place/nadenka/opinions,2026-10-14,reviews,accessible,10,
+S079,batch_05,V023,https://restaurantguru.ru/Gusary-Saint-Petersburg-2,2026-10-14,venue,accessible,,Сливовица отделена от настоек и не создаёт вкус «слива» в датасете.
+S080,batch_05,V023,https://yandex.com/maps/org/gusary/209530054087/reviews/,2026-10-14,reviews,accessible,,
+S081,batch_05,V024,https://kulturnayaspb.ru/,2026-10-14,venue,accessible,,"В v1 филиал не определён. Для досбора выбран Некрасова 48. Ломоносова 3 — отдельный филиал, его данные не смешивались."
+S082,batch_05,V024,https://yandex.com/maps/org/kultura/229912180207/reviews/,2026-10-14,reviews,accessible,,Некоторые комментарии повторяют рекламные обороты. Это не доказательство фальсификации; рекомендации требуют проверки чувствительности к таким публикациям.
+S083,batch_05,V025,https://www.restoclub.ru/spb/place/svoboda-3,2026-10-14,venue,accessible,,Отзывы в альтернативном публичном источнике; не переносились с филиала на Ленина.
+S084,batch_05,V025,https://www.tbank.ru/reviews/company/ryumochnaya-svoboda/123750/point-of-sale/39473721/,2026-10-14,reviews,accessible,,
+S085,batch_05,V010,https://ippolit.spb.ru/assets/venues/ippolit/menu_bar.jpg?v=1789553516,2026-10-14,menu,accessible,20,"Визуальная проверка официального скана, 40 мл / 295 руб. Ликёры и биттеры в этом же разделе помечены отдельно."
+S086,batch_05,V022,https://ippolit.spb.ru/assets/venues/nadenka/menu_bar.jpg?v=1789553830,2026-10-14,menu,accessible,20,"Визуальная проверка официального скана, 40 мл / 295 руб. Ликёры и биттеры в этом же разделе помечены отдельно."
+S087,batch_05,V012,https://ippolit.spb.ru/assets/venues/fedya/menu_bar.jpg?v=1789553735,2026-10-14,menu,accessible,16,"Визуальная проверка официального скана, 40 мл / 295 руб. Ликёры и биттеры в этом же разделе помечены отдельно."
+S088,batch_06,V026,https://www.restoclub.ru/spb/place/svobodnaja,2026-10-14,venue,accessible,,Фиалковая без состава не объединена с виноградом-фиалкой. Овощная — именованная позиция без установленного состава.
+S089,batch_06,V026,https://yandex.com/maps/org/svobodnaya/13999828692/reviews/,2026-10-14,reviews,accessible,,
+S090,batch_06,V027,https://kamorkaspb.ru/,2026-10-14,venue,accessible,,"Группа ягодных и фруктовых не превращена в конкретные рецептуры. Каролина рипер названа острым сортом в тексте, не произвольным рейтингом."
+S091,batch_06,V027,https://yandex.com/maps/org/kamorka/164956889035/reviews/,2026-10-14,reviews,accessible,,
+S092,batch_06,V028,https://www.restoclub.ru/spb/place/u-mari,2026-10-14,venue,accessible,,Квашеная капуста как блюдо не смешивается с одноимённой настойкой; обе встречаются в текстах.
+S093,batch_06,V028,https://yandex.com/maps/org/u_maryi/214731396165/reviews/,2026-10-14,reviews,accessible,,
+S094,batch_06,V029,https://prolive.group/,2026-10-14,venue,accessible,,Новая итерация после «Фонтанки 69»; данные прошлой концепции не добавлялись как актуальный ассортимент. Заявление гостя про 50 мл не использовано как меню.
+S095,batch_06,V029,https://yandex.com/maps/org/proliv/113835722955/reviews/,2026-10-14,reviews,accessible,,
+S096,batch_06,V030,https://www.restorating.ru/spb/catalogue/zapisi-ul-razezzhaya-19,2026-10-14,venue,accessible,,"Карточка указывает домашние настойки и расписание. Площадка явно сообщает, что отзывов пока нет; ни одной записи не выдумано."
+S097,batch_06,V030,https://www.restorating.ru/spb/catalogue/zapisi-ul-razezzhaya-19,2026-10-14,reviews,no_reviews,0,Перешли из каталога по фактической ссылке. Запрошенная ранее короткая ссылка не работала.
+S098,batch_06,V030,https://borisstars.ru/news/14205,2026-10-14,review_candidate,insufficient_text,,Публичный фрагмент профессиональной рецензии не содержит оценок настоек; не включали.
+S099,access_audit,,https://www.restoclub.ru/robots.txt,2026-10-14,source_rules,read,,Automated fetching of review pages was not continued after HTTP 503. Public pages were read through the web tool; long texts were not republished.
+S100,access_audit,,https://yandex.com/robots.txt,2026-10-14,source_rules,read,,"robots.txt forbids automated Maps collection. One initial page was fetched before the restriction was established; subsequent work used public web views, no crawler/API harvesting."
+S101,access_audit,,https://spb.flamp.ru/robots.txt,2026-10-14,source_rules,unavailable,,HTTP 403; no bypass.
+S102,access_audit,,https://2gis.ru/robots.txt,2026-10-14,source_rules,unavailable,,HTTP 403; only accessible public web representations used.
+S103,access_audit,,https://spb.flamp.ru/search/%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%B9%D0%BA%D0%B8,2026-10-14,review_search,unavailable,,Search page inaccessible; domain searches did not find relevant restaurant review pages.
+S104,access_audit,V006,https://room13.ru/,2026-10-14,candidate_disambiguation,unrelated,,"Gaming clan site, not the bar; no records used."
+S105,access_audit,V009,https://brimborium.ru/,2026-10-14,candidate_disambiguation,unavailable,,Could not verify this domain; used the actual venue card.
+S106,access_audit,V007,https://www.restoclub.ru/spb/place/mama-tata/opinions,2026-10-14,review_search,unavailable,,Correct branch URL is mama-tata-1/opinions.
+S107,access_audit,V008,https://www.restoclub.ru/spb/place/evgenich/opinions,2026-10-14,review_search,unavailable,,Correct branch URL is evgenich-1/opinions.
+S108,access_audit,V022,https://ippolit.spb.ru/api/menu-scans/nadenka,2026-10-14,menu,accessible,,Ordinary anonymous endpoint used by the official website menu button; robots allows access.
+S109,access_audit,V010,https://ippolit.spb.ru/api/menu-scans/ippolit,2026-10-14,menu,accessible,,Official website menu image URLs; no authorization or CAPTCHA.
+S110,access_audit,V012,https://ippolit.spb.ru/api/menu-scans/fedya,2026-10-14,menu,accessible,,Official website menu image URLs; no authorization or CAPTCHA.
+S111,access_audit,V008,https://drive.google.com/file/d/1FZfs3iD_1jESMUi2c4gXKGTAAP52ZaSk/preview,2026-10-14,menu,unavailable,,Public embedded menu did not render; no login attempted.

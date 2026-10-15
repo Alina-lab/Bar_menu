@@ -1,0 +1,63 @@
+{
+  "venues_total": 43,
+  "venues_examined": 43,
+  "venues_verified_open": 38,
+  "current_sample": 30,
+  "reviews_total": 368,
+  "reviews_verified_unique": 358,
+  "reviews_unverified": 10,
+  "duplicate_rows": 0,
+  "mentions_total": 468,
+  "mentions_verified": 450,
+  "concrete_mentions_verified": 198,
+  "normalized_flavors_verified": 114,
+  "concrete_sentiment": {
+    "neutral": 6,
+    "negative": 10,
+    "positive": 144,
+    "mixed": 6,
+    "mention_only": 32
+  },
+  "reviews_by_platform_total": {
+    "Restoclub": 66,
+    "2ГИС": 18,
+    "Tripadvisor": 6,
+    "href.ru (перепубликация)": 2,
+    "Яндекс Карты": 273,
+    "Т-Банк Отзывы": 3
+  },
+  "reviews_by_platform_verified": {
+    "Restoclub": 65,
+    "2ГИС": 11,
+    "Tripadvisor": 6,
+    "Яндекс Карты": 273,
+    "Т-Банк Отзывы": 3
+  },
+  "menu_total": 95,
+  "menu_verified": 88,
+  "reviews_with_concrete_flavors": 108,
+  "verified_reviews_with_platform_warning": 4,
+  "verified_reviews_by_date_kind": {
+    "displayed_full": 211,
+    "unknown": 12,
+    "publication": 3,
+    "displayed_partial": 117,
+    "displayed_or_updated": 15
+  },
+  "verified_reviews_by_text_completeness": {
+    "full": 83,
+    "visible_excerpt": 275
+  },
+  "known_residency": 5,
+  "known_gender": 0,
+  "known_age": 0,
+  "concrete_mentions_by_confidence": {
+    "high": 185,
+    "medium": 12,
+    "low": 1
+  },
+  "current_sample_review_count": 334,
+  "verified_reviews_with_bias_flag": 5,
+  "conservative_concrete_mentions": 143,
+  "conservative_reviews_with_concrete_flavors": 84
+}
