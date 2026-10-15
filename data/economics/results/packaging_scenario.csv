@@ -1,0 +1,4 @@
+menu,ingredient_id,assumed_order_step,base_unit,purchase_cash_rub,delta_cash_rub,status
+A,horseradish,100.0,g,15473.0,-1520.0,assumed_availability_at_same_published_per_kg_tariff
+B,horseradish,100.0,g,15489.0,-1520.0,assumed_availability_at_same_published_per_kg_tariff
+C,horseradish,100.0,g,16791.0,-1520.0,assumed_availability_at_same_published_per_kg_tariff
