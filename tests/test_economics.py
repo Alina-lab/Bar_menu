@@ -156,7 +156,7 @@ def test_menu_constraints_and_procurement_conservation():
         assert set(config["required_primary_roles"]).issubset(roles.loc[selected,"primary_role"])
         assert menu["purchase_cash_rub"]==pytest.approx(menu["consumed_cost_rub"]+menu["leftover_value_rub"])
     assert "C07" in summary["menus"]["C"]["selected"]
-    assert len({tuple(x["selected"]) for x in summary["menus"].values()})==3
+    assert len({tuple(x["selected"]) for x in summary["menus"].values()})==4
     assert summary["recipes_with_measured_yield"]==0
     p=pd.read_csv(e.OUT/"procurement.csv")
     assert (p.packages%1==0).all() and p.leftover_base_quantity.ge(-1e-8).all()
@@ -182,3 +182,68 @@ def test_notebook_and_key_report_numbers():
     text=(ROOT/"README.md").read_text()
     for value in ["16 993", "17 009", "18 311", "20%", "235", "265"]:
         assert value in text
+
+
+def test_frozen_baseline_and_b2_tradeoffs():
+    old=json.loads((e.DATA/"stage1_baseline.json").read_text())
+    new=json.loads((e.OUT/"summary.json").read_text())["menus"]
+    for name in ["A","B","C"]:
+        assert new[name]["selected"]==old["menus"][name]["selected"]
+    b,b2=new["B"],new["B2"]
+    assert set(b2["selected"])-set(b["selected"])=={"C02","C13"}
+    assert b2["classic_count"]>b["classic_count"]
+    assert b2["strong_overlap_pairs"]<b["strong_overlap_pairs"]
+    assert b2["purchase_cash_rub"]>b["purchase_cash_rub"]
+    assert b2["consumed_cost_rub"]<b["consumed_cost_rub"]
+    assert b2["strict_event_count"]<b["strict_event_count"]
+    assert b2["high_risk_leftover_value_rub"]>b["high_risk_leftover_value_rub"]
+
+
+def test_similarity_does_not_impute_sensory_values():
+    cfg=e.read_config();c,f=e.prepare_candidates();i=e.load_ingredients(cfg);r,q=e.recipe_tables(c,i,cfg)
+    pairs=e.flavor_pairs(c,q,i).set_index(["candidate_a","candidate_b"])
+    assert len(pairs)==15*14/2 and pairs.index.is_unique
+    assert pairs.loc[("C01","C10"),"review_flag"]=="strong"
+    assert pairs.loc[("C03","C12"),"review_flag"]=="strong"
+    assert pairs.loc[("C09","C11"),"review_flag"]=="moderate"
+    # Общие водка/сахар не дают ароматического пересечения вишне и лимончелло.
+    assert pairs.loc[("C02","C04"),"nonuniversal_ingredient_jaccard"]==0
+    assert pairs.loc[("C02","C04"),"review_flag"]=="none"
+    assert pairs.sweetness_comparison.eq("unknown").all()
+    assert not pairs.sensory_similarity_measured.any()
+
+
+def test_all_inputs_audited_without_unsupported_upgrade():
+    recipes=pd.read_csv(e.DATA/"recipe_audit.csv")
+    prices=pd.read_csv(e.DATA/"ingredient_audit.csv")
+    assert len(recipes)==15 and recipes.candidate_id.is_unique
+    assert len(prices)==21 and prices.ingredient_id.is_unique
+    assert recipes.yield_status.eq("assumed_unmeasured").all()
+    assert recipes.shelf_life_days.isna().all()
+    assert recipes.shelf_life_status.eq("not_established").all()
+    assert recipes.final_abv_status.eq("unknown_not_calculated").all()
+    assert recipes.composition_status.value_counts().to_dict()=={"model_only":7,"model_adaptation":4,"published_quantities":4}
+    h=prices.set_index("ingredient_id").loc["horseradish"]
+    assert (h.current_price_rub,h.current_quantity,h.current_unit)==(900,500,"g")
+    assert prices.loc[prices.ingredient_id.eq("cream"),"current_unit"].item()=="ml"
+    assert prices.loc[prices.ingredient_id.eq("cream_cheese"),"current_price_rub"].item()==248
+    assert prices.loc[prices.ingredient_id.eq("basil"),"order_unit_status"].item()=="approximate_weight_step"
+
+
+def test_joint_evidence_coverage_uses_event_union():
+    ev=pd.read_csv(e.OUT/"candidate_evidence.csv")
+    m=pd.read_csv(e.OUT/"menu_summary.csv").set_index("menu").loc["B2"]
+    selected=m.selected.split("|");part=ev[ev.candidate_id.isin(selected)]
+    assert m.verified_event_count==part.event_key.nunique()
+    assert m.verified_mentions_rows==len(part)
+    assert m.verified_event_count<m.verified_mentions_rows
+    assert m.strict_event_count==part[part.strict_flag.eq(1)].event_key.nunique()
+
+
+def test_legacy_weights_are_sensitivity_not_b2_selection():
+    w=pd.read_csv(e.OUT/"legacy_weight_sensitivity.csv")
+    assert len(w)==81
+    cols=["review_weight","diversity_weight","sharing_weight","cash_weight"]
+    np.testing.assert_allclose(w[cols].sum(axis=1),1)
+    assert w[cols].min().min()>=.1 and w[cols].max().max()<=.6
+    assert w.method.str.contains("legacy").all()

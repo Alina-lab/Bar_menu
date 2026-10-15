@@ -128,6 +128,13 @@ def load_ingredients(config):
     ingredients["package_base_quantity"] = [x[0] for x in sizes]
     ingredients["base_unit"] = [x[1] for x in sizes]
     ingredients["rub_per_base_unit"] = ingredients.package_price_rub / ingredients.package_base_quantity
+    audit=pd.read_csv(DATA/"ingredient_audit.csv").fillna("")
+    if set(audit.ingredient_id)!=set(ingredients.ingredient_id) or not audit.ingredient_id.is_unique:
+        raise ValueError("Аудит должен покрывать каждый ингредиент ровно один раз")
+    checked=ingredients.merge(audit[["ingredient_id","current_price_rub","current_quantity","current_unit"]],on="ingredient_id",validate="one_to_one")
+    if not (checked.package_price_rub.eq(checked.current_price_rub)&checked.package_quantity.eq(checked.current_quantity)&checked.unit.eq(checked.current_unit)).all():
+        raise ValueError("Входные цены или единицы расходятся с аудитом")
+    ingredients=ingredients.merge(audit[["ingredient_id","SPb_availability","stock_status","order_unit_status","supplier_minimum_status","availability_source_url"]],on="ingredient_id",validate="one_to_one")
     return ingredients.set_index("ingredient_id", drop=False)
 
 
@@ -207,6 +214,10 @@ def recipe_tables(candidates, ingredients, config):
                      "meets_margin_threshold": fraction >= config["min_material_margin_fraction"],
                      "nominal_product_ml": recipe["nominal_product_ml"], "loss_fraction": recipe["loss_fraction"],
                      "time_days": recipe["time_days"], "time_status": recipe["time_status"],
+                     "model_added_sugar_g_per_l":recipe["ingredients"].get("sugar",0)/cost["ready_ml"]*1000,
+                     "model_honey_g_per_l":recipe["ingredients"].get("honey",0)/cost["ready_ml"]*1000,
+                     "sensory_sweetness_status":"unknown_not_measured",
+                     "final_abv_status":"unknown_not_measured",
                      "composition_status": source.loc[row.candidate_id,"composition_status"],
                      "source_url": source.loc[row.candidate_id,"source_url"], "yield_status": "assumed_unmeasured"})
         for ingredient, qty in recipe["ingredients"].items():
@@ -378,6 +389,98 @@ def ingredient_price_sensitivity(recipes, ingredients, config):
     return pd.DataFrame(rows)
 
 
+def flavor_pairs(candidates, quantities, ingredients):
+    """Флаги для дегустации: состав модели не доказывает сенсорную эквивалентность."""
+    profiles = pd.read_csv(DATA / "flavor_profiles.csv").set_index("candidate_id")
+    roles = candidates.set_index("candidate_id")
+    nonuniversal = ingredients.index[ingredients.universal.eq(0)]
+    rows = []
+    for a, b in itertools.combinations(sorted(profiles.index), 2):
+        aa = set(profiles.loc[a, "flavor_anchors"].split("|"))
+        ab = set(profiles.loc[b, "flavor_anchors"].split("|"))
+        common = aa & ab
+        ia = set(quantities.loc[a, nonuniversal].loc[lambda x:x.gt(0)].index)
+        ib = set(quantities.loc[b, nonuniversal].loc[lambda x:x.gt(0)].index)
+        # Названный плод/пряный корень — сильный сигнал; общий базилик при разных
+        # плодах — отдельный умеренный сигнал, не автоматически дубль.
+        flag = "strong" if common - {"basil"} else "moderate" if common else "background" if roles.loc[a,"primary_role"] == roles.loc[b,"primary_role"] else "none"
+        rows.append({"candidate_a":a,"candidate_b":b,"shared_anchors":"|".join(sorted(common)),
+                     "review_flag":flag,"flag_status":"expert_hypothesis_not_tasting",
+                     "same_primary_category":roles.loc[a,"primary_role"] == roles.loc[b,"primary_role"],
+                     "both_dessert_hypothesis":bool(profiles.loc[a,"dessert_hypothesis"] and profiles.loc[b,"dessert_hypothesis"]),
+                     "nonuniversal_ingredient_jaccard":len(ia & ib)/len(ia | ib),
+                     "sweetness_comparison":"unknown","acidity_comparison":"unknown",
+                     "sensory_similarity_measured":False})
+    return pd.DataFrame(rows)
+
+
+def menu_review_metrics(selected, pairs, flavor_matrix):
+    pairset=pairs[pairs.candidate_a.isin(selected)&pairs.candidate_b.isin(selected)]
+    ev=pd.read_csv(OUT/"candidate_evidence.csv").fillna("")
+    ev=ev[ev.candidate_id.isin(selected)]
+    audit=pd.read_csv(DATA/"recipe_audit.csv")
+    audit=audit[audit.candidate_id.isin(selected)]
+    profiles=pd.read_csv(DATA/"flavor_profiles.csv").set_index("candidate_id")
+    unusual=flavor_matrix.set_index("candidate_id").loc[list(selected),"unusual"].eq(1)
+    dirs=["ягодная","фруктовая","цитрусовая","травяная","пряная","десертная","сливочная","овощная"]
+    strict=ev[ev.strict_flag.eq(1)]
+    # Счёт людей не выводится: event_key объединяет найденные связанные публикации.
+    return {"strong_overlap_pairs":int(pairset.review_flag.eq("strong").sum()),
+            "moderate_overlap_pairs":int(pairset.review_flag.eq("moderate").sum()),
+            "direction_tags":int(flavor_matrix.set_index("candidate_id").loc[list(selected),dirs].gt(0).any().sum()),
+            "unusual_combination_count":int((profiles.loc[list(selected),"flavor_anchors"].str.contains("\\|") & unusual).sum()),
+            "verified_event_count":int(ev.event_key.nunique()),
+            "strict_event_count":int(strict.event_key.nunique()),
+            "verified_review_count":int(ev.review_id.nunique()),
+            "verified_mentions_rows":len(ev),"strict_mentions_rows":len(strict),
+            "published_recipe_count":int(audit.composition_status.eq("published_quantities").sum()),
+            "adaptation_recipe_count":int(audit.composition_status.eq("model_adaptation").sum()),
+            "model_only_recipe_count":int(audit.composition_status.eq("model_only").sum()),
+            "unmeasured_yield_count":int(audit.yield_status.eq("assumed_unmeasured").sum())}
+
+
+def fixed_and_reviewed_menus(candidates, recipes, quantities, ingredients, config, flavor_matrix):
+    baseline=json.loads((DATA/"stage1_baseline.json").read_text())
+    pairs=flavor_pairs(candidates,quantities,ingredients)
+    menus={name:basket_metrics(m["selected"],candidates,recipes,quantities,ingredients,config)
+           for name,m in baseline["menus"].items()}
+    # B2 сохраняет премиальную пару B; две замены раскрыты в отчёте.
+    chosen=sorted((set(menus["B"]["selected"])-{"C03","C10"})|{"C02","C13"})
+    menus["B2"]=basket_metrics(chosen,candidates,recipes,quantities,ingredients,config)
+    for name,m in menus.items():
+        m.update(menu_review_metrics(m["selected"],pairs,flavor_matrix))
+        m["selection_status"]="frozen_v1_membership_repriced" if name!="B2" else "expert_alternative_for_trial"
+    pairs.to_csv(OUT/"flavor_pairs.csv",index=False)
+    return menus,pairs
+
+
+def legacy_weight_sensitivity(feasible, config):
+    """Только устойчивость прежней эвристики; новый выбор B2 не использует балл."""
+    a=min(feasible,key=lambda x:(x["purchase_cash_rub"],x["consumed_cost_rub"],x["selected"]))
+    metrics=["review_evidence_score","primary_roles","shared_nonuniversal_fraction","purchase_cash_rub"]
+    ranges={k:(min(x[k] for x in feasible),max(x[k] for x in feasible)) for k in metrics}
+    allowed=[x for x in feasible if x["selected"]!=a["selected"] and x["purchase_cash_rub"]<=a["purchase_cash_rub"]*config["budget_multiplier_balanced"]]
+    rows=[]
+    for w in itertools.product(range(1,7),repeat=4):
+        if sum(w)!=10:continue
+        def score(x):
+            total=0
+            for k,weight in zip(metrics,w):
+                lo,hi=ranges[k];v=(x[k]-lo)/(hi-lo) if hi>lo else 0
+                total+=weight/10*(1-v if k=="purchase_cash_rub" else v)
+            return total,-x["purchase_cash_rub"]
+        top=max(allowed,key=score)
+        rows.append(dict(zip(["review_weight","diversity_weight","sharing_weight","cash_weight"],[v/10 for v in w]),
+                         selected="|".join(top["selected"]),cash_rub=top["purchase_cash_rub"],method="legacy_rule_current_prices_not_recommendation"))
+    # Исходные 0.35/0.25/0.20/0.20 лежат между узлами сетки.
+    weights=config["balanced_weights"]
+    w=tuple(10*weights[k] for k in ["review_evidence","diversity","sharing","cash"])
+    top=max(allowed,key=score)
+    rows.append(dict(zip(["review_weight","diversity_weight","sharing_weight","cash_weight"],[v/10 for v in w]),
+                     selected="|".join(top["selected"]),cash_rub=top["purchase_cash_rub"],method="original_legacy_weights_current_prices"))
+    return pd.DataFrame(rows)
+
+
 def run(stage="all"):
     candidates, flavor_matrix = prepare_candidates()
     if stage == "candidates":
@@ -386,7 +489,22 @@ def run(stage="all"):
     config=read_config()
     ingredients=load_ingredients(config)
     recipes,quantities=recipe_tables(candidates,ingredients,config)
-    menus,feasible=select_menus(candidates,recipes,quantities,ingredients,config)
+    _,feasible=select_menus(candidates,recipes,quantities,ingredients,config)
+    menus,pairs=fixed_and_reviewed_menus(candidates,recipes,quantities,ingredients,config,flavor_matrix)
+    legacy_weight_sensitivity(feasible,config).to_csv(OUT/"legacy_weight_sensitivity.csv",index=False)
+    # Контрфактические замены внутри текущей B: те же цены, выходы и премиальный пул.
+    alternatives=[]
+    for label,remove,add in [("B",[],[]),("cherry_for_beet",["C10"],["C02"]),
+                             ("cherry_for_raspberry",["C03"],["C02"]),
+                             ("B2",["C03","C10"],["C02","C13"]),
+                             ("no_basil_pair",["C03","C10","C11"],["C02","C13","C14"])]:
+        ids=sorted((set(menus["B"]["selected"])-set(remove))|set(add))
+        m=basket_metrics(ids,candidates,recipes,quantities,ingredients,config)
+        m.update(menu_review_metrics(ids,pairs,flavor_matrix))
+        m.update(alternative=label,selected="|".join(ids),removed="|".join(remove),added="|".join(add))
+        m["passes_expensive_limit"]=m["expensive_specific_recipes"]<=config["max_expensive_specific_recipes"]
+        alternatives.append(m)
+    pd.DataFrame(alternatives).to_csv(OUT/"menu_alternatives.csv",index=False)
     scenarios,sensitivity=scenario_tables(menus,recipes,ingredients,quantities,candidates,config)
     stress_menus=stress_menu_table(sensitivity,recipes,config)
     ingredient_stress=ingredient_price_sensitivity(recipes,ingredients,config)
@@ -471,7 +589,7 @@ def make_figures(candidates,flavor_matrix,recipes,quantities,ingredients,menus,s
     save(fig,"reviews.png","Исторические и текущие отзывы вместе; простое перечисление не считается положительной оценкой.")
     dirs=["ягодная","фруктовая","цитрусовая","травяная","пряная","десертная","сливочная","овощная"]
     fig,ax=plt.subplots(figsize=(10,7));ax.imshow(flavor_matrix[dirs].to_numpy(),cmap="Blues",vmin=0,vmax=1,aspect="auto")
-    ax.set(yticks=range(len(labels)),yticklabels=labels,xticks=range(len(dirs)),xticklabels=dirs,title="Матрица ролей: классика, десерты и несладкие направления")
+    ax.set(yticks=range(len(labels)),yticklabels=labels,xticks=range(len(dirs)),xticklabels=dirs,title="Матрица ролей: плоды, травы, пряности и десерты")
     ax.tick_params(axis="x",rotation=40)
     save(fig,"flavor_matrix.png","Экспертная классификация расчётных вариантов; она не меняет прежний справочник вкусов.")
     shared=quantities.gt(0).sum()
@@ -492,14 +610,14 @@ def make_figures(candidates,flavor_matrix,recipes,quantities,ingredients,menus,s
     ax.set(xlabel="Стоимость использованных ингредиентов на 50 мл, ₽",xlim=(0,recipes.cost_50ml_rub.max()*1.22),
            title="Материальная себестоимость зависит от неизмеренного выхода");ax.invert_yaxis()
     save(fig,"costs.png","Все выходы и потери сценарные. Розничные публичные цены; труд, налоги и прочие расходы не включены.")
-    fig,axes=plt.subplots(1,2,figsize=(11,5.3));x=np.arange(3)
+    fig,axes=plt.subplots(1,2,figsize=(11,5.3));x=np.arange(len(menus))
     axes[0].bar(x,menus.consumed_cost_rub,label="Использовано",color="#3B827F")
     axes[0].bar(x,menus.leftover_value_rub,bottom=menus.consumed_cost_rub,label="Остаток сырья",color="#D7B878")
-    axes[0].set(xticks=x,xticklabels=["A · закупка","B · баланс","C · авторское"],ylabel="Первоначальная закупка, ₽",title="Закупка больше расхода сырья")
+    axes[0].set(xticks=x,xticklabels=menus.menu,ylabel="Первоначальная закупка, ₽",title="Одинаковые обновлённые цены")
     axes[0].set_ylim(0,menus.purchase_cash_rub.max()*1.23)
     axes[0].legend(frameon=False)
-    axes[1].bar(["A","B","C"],[8]*3,label="8 основных × 230 ₽",color="#628DA5")
-    axes[1].bar(["A","B","C"],[2]*3,bottom=[8]*3,label="2 премиальные × 330 ₽",color="#D38D50")
+    axes[1].bar(menus.menu,[8]*len(menus),label="8 основных × 230 ₽",color="#628DA5")
+    axes[1].bar(menus.menu,[2]*len(menus),bottom=[8]*len(menus),label="2 премиальные × 330 ₽",color="#D38D50")
     axes[1].set(ylim=(0,11.5),ylabel="Позиции меню",title="Структура каждого меню: 8 + 2");axes[1].legend(frameon=False,loc="upper center",fontsize=8)
     save(fig,"procurement_and_tiers.png","Остаток — потенциально пригодный запас, не автоматически потеря. Доставка и расходники показаны отдельно в таблицах.")
     fig,ax=plt.subplots(figsize=(10,5.5));shares=np.linspace(0,.5,101)

@@ -1,0 +1,559 @@
+{
+  "commit": "09fb89200c90ed51c374d8d2bd6ffc20b425f3f9",
+  "captured_at": "2026-10-15",
+  "config": {
+    "currency": "RUB",
+    "serving_ml": 50,
+    "target_weighted_price_rub": 250,
+    "starting_price_reference_rub": 200,
+    "menu_size": 10,
+    "basic_count": 8,
+    "premium_count": 2,
+    "basic_price_rub": 230,
+    "premium_price_rub": 330,
+    "premium_pool": [
+      "C06",
+      "C07",
+      "C08",
+      "C12"
+    ],
+    "required_primary_roles": [
+      "ягодная",
+      "цитрусовая",
+      "травяная",
+      "пряная",
+      "фруктовая",
+      "десертная"
+    ],
+    "max_per_primary_role": 3,
+    "max_creamy": 2,
+    "min_classics": 2,
+    "min_unusual": 2,
+    "max_expensive_specific_recipes": 2,
+    "expensive_package_quantile": 0.75,
+    "expensive_package_threshold_rub_override": null,
+    "specific_ingredient_dominance": 0.8,
+    "min_material_margin_fraction": 0.6,
+    "starting_output_ml_per_recipe": 1000,
+    "within_tier_sales_distribution": "equal_per_position_assumption",
+    "premium_sales_share_scenarios": {
+      "low": 0.05,
+      "base": 0.2,
+      "high": 0.35
+    },
+    "alternative_price_pairs": [
+      [
+        240,
+        340
+      ],
+      [
+        250,
+        350
+      ]
+    ],
+    "procurement_reuse_cycles": 3,
+    "weighed_order_step_scenario": {
+      "ingredient_id": "horseradish",
+      "quantity": 100,
+      "unit": "g",
+      "status": "assumed_availability_at_same_published_per_kg_tariff"
+    },
+    "optional_consumables_rub_per_batch": 20,
+    "optional_delivery_rub_per_supplier": 250,
+    "unpriced_expenses": [
+      "труд",
+      "аренда",
+      "налоги",
+      "эквайринг",
+      "оборудование",
+      "хранение",
+      "списания готовых настоек"
+    ],
+    "budget_multiplier_balanced": 1.2,
+    "budget_multiplier_author": 1.3,
+    "author_anchor_candidates": [
+      "C07"
+    ],
+    "balanced_weights": {
+      "review_evidence": 0.35,
+      "diversity": 0.25,
+      "sharing": 0.2,
+      "cash": 0.2
+    },
+    "price_shocks": [
+      0.1,
+      0.2
+    ],
+    "extra_loss_fraction_points": 0.1,
+    "unit_to_base": {
+      "g": {
+        "base": "g",
+        "factor": 1
+      },
+      "kg": {
+        "base": "g",
+        "factor": 1000
+      },
+      "ml": {
+        "base": "ml",
+        "factor": 1
+      },
+      "l": {
+        "base": "ml",
+        "factor": 1000
+      }
+    },
+    "recipe_scenarios": {
+      "C01": {
+        "ingredients": {
+          "vodka": 500,
+          "horseradish": 60,
+          "honey": 20
+        },
+        "nominal_product_ml": 520,
+        "loss_fraction": 0.08,
+        "time_days": 5,
+        "time_status": "assumed"
+      },
+      "C02": {
+        "ingredients": {
+          "vodka": 500,
+          "cherry": 350,
+          "sugar": 100
+        },
+        "nominal_product_ml": 700,
+        "loss_fraction": 0.1,
+        "time_days": 30,
+        "time_status": "assumed"
+      },
+      "C03": {
+        "ingredients": {
+          "vodka": 500,
+          "raspberry": 300,
+          "sugar": 100
+        },
+        "nominal_product_ml": 700,
+        "loss_fraction": 0.12,
+        "time_days": 30,
+        "time_status": "assumed"
+      },
+      "C04": {
+        "ingredients": {
+          "vodka": 700,
+          "lemon": 700,
+          "sugar": 400,
+          "water": 300
+        },
+        "nominal_product_ml": 1240,
+        "loss_fraction": 0.05,
+        "time_days": 13,
+        "time_status": "published_range_endpoint"
+      },
+      "C05": {
+        "ingredients": {
+          "vodka": 500,
+          "sorrel": 100,
+          "honey": 100
+        },
+        "nominal_product_ml": 590,
+        "loss_fraction": 0.1,
+        "time_days": 16,
+        "time_status": "published_range_endpoint"
+      },
+      "C06": {
+        "ingredients": {
+          "vodka": 500,
+          "halva": 600,
+          "honey": 90
+        },
+        "nominal_product_ml": 850,
+        "loss_fraction": 0.15,
+        "time_days": 1,
+        "time_status": "published"
+      },
+      "C07": {
+        "ingredients": {
+          "vodka": 500,
+          "blueberry": 300,
+          "cream_cheese": 150,
+          "sugar": 100,
+          "water": 100
+        },
+        "nominal_product_ml": 900,
+        "loss_fraction": 0.15,
+        "time_days": 3,
+        "time_status": "assumed"
+      },
+      "C08": {
+        "ingredients": {
+          "vodka": 500,
+          "passionfruit": 300,
+          "sugar": 100,
+          "water": 150
+        },
+        "nominal_product_ml": 950,
+        "loss_fraction": 0.1,
+        "time_days": 5,
+        "time_status": "assumed"
+      },
+      "C09": {
+        "ingredients": {
+          "vodka": 500,
+          "apple": 350,
+          "basil": 15,
+          "sugar": 80
+        },
+        "nominal_product_ml": 720,
+        "loss_fraction": 0.1,
+        "time_days": 10,
+        "time_status": "assumed"
+      },
+      "C10": {
+        "ingredients": {
+          "vodka": 500,
+          "beet": 250,
+          "horseradish": 30,
+          "honey": 20
+        },
+        "nominal_product_ml": 650,
+        "loss_fraction": 0.1,
+        "time_days": 5,
+        "time_status": "assumed"
+      },
+      "C11": {
+        "ingredients": {
+          "vodka": 500,
+          "strawberry": 350,
+          "basil": 15,
+          "sugar": 100
+        },
+        "nominal_product_ml": 750,
+        "loss_fraction": 0.12,
+        "time_days": 10,
+        "time_status": "assumed"
+      },
+      "C12": {
+        "ingredients": {
+          "vodka": 500,
+          "raspberry": 300,
+          "cream": 200,
+          "sugar": 100
+        },
+        "nominal_product_ml": 950,
+        "loss_fraction": 0.12,
+        "time_days": 3,
+        "time_status": "assumed"
+      },
+      "C13": {
+        "ingredients": {
+          "vodka": 500,
+          "sea_buckthorn": 500,
+          "sugar": 75
+        },
+        "nominal_product_ml": 800,
+        "loss_fraction": 0.12,
+        "time_days": 25,
+        "time_status": "published_range_endpoint"
+      },
+      "C14": {
+        "ingredients": {
+          "vodka": 500,
+          "cranberry": 250,
+          "sugar": 150
+        },
+        "nominal_product_ml": 700,
+        "loss_fraction": 0.1,
+        "time_days": 21,
+        "time_status": "published"
+      },
+      "C15": {
+        "ingredients": {
+          "vodka": 500,
+          "tomato": 400,
+          "sugar": 30
+        },
+        "nominal_product_ml": 750,
+        "loss_fraction": 0.15,
+        "time_days": 7,
+        "time_status": "assumed"
+      }
+    },
+    "assumption_notes": [
+      "Количество каждого ингредиента в recipe_scenarios задано в g или ml согласно базовой единице из ingredients.csv; плотность не подставляется.",
+      "nominal_product_ml — независимое допущение об объёме продукта перед технологическими потерями; не сумма граммов и миллилитров и не измеренный выход.",
+      "Ожидаемый сценарный выход = nominal_product_ml × (1 − loss_fraction). Для сравнения закупок все рецептуры масштабируются к 1000 мл пригодного выхода.",
+      "Лимоны оплачиваются целиком; стоимость пригодной мякоти после снятия цедры не вычитается без измерения выхода и фактического использования.",
+      "Для весовых товаров шаг заказа из ingredients.csv — расчётное допущение; запечатанная упаковка и минимальный заказ не заявляются подтверждёнными.",
+      "Доли продаж и равные доли позиций внутри каждого ценового уровня — сценарии; отзывы не преобразуются в вероятности продаж.",
+      "Дополнительные 20 р на партию и 250 р на поставщика — иллюстративные расходы; они показаны отдельно от материальной себестоимости.",
+      "Порог дороговизны равен 75-му процентилю цен закупочных единиц неуниверсальных ингредиентов. Специфичность определяется долей потребности одной рецептуры не менее 80% внутри меню.",
+      "Уровни цен и премиальный пул — экспертные гипотезы. Готовность гостей платить не измерена.",
+      "Вес критериев сбалансированного варианта экспертный; сравнение не доказывает коммерческую оптимальность.",
+      "Меню C — отдельный сценарий с авторским якорем Черника — сыр. Это экспертная постановка для сравнения закупок; она не доказывает спрос на сочетание.",
+      "Сроки хранения и физическая стабильность продуктов не подтверждены; реализуемость совместного производства и заказа должна проверяться отдельно."
+    ]
+  },
+  "menus": {
+    "A": {
+      "selected": [
+        "C01",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C09",
+        "C10",
+        "C12",
+        "C13",
+        "C15"
+      ],
+      "purchase_cash_rub": 16993.0,
+      "consumed_cost_rub": 14199.590996088313,
+      "leftover_value_rub": 2793.4090039116895,
+      "high_risk_leftover_value_rub": 1906.0223946566189,
+      "suppliers": 6,
+      "ingredient_count": 15,
+      "shared_nonuniversal_fraction": 0.5635525325456886,
+      "unique_nonuniversal_ingredients": 9,
+      "expensive_specific_recipes": 0,
+      "expensive_threshold_rub": 581.75,
+      "primary_roles": 8,
+      "classic_count": 4,
+      "unusual_count": 6,
+      "creamy_count": 1,
+      "min_material_margin_fraction": 0.6058419368910862,
+      "review_evidence_score": 11.731386068380056,
+      "strict_mentions_sum": 36,
+      "expensive_recipe_ids": "",
+      "balanced_score": 0.909761012197182,
+      "optional_delivery_scenario_rub": 1500,
+      "optional_consumables_scenario_rub": 200,
+      "cash_with_optional_scenarios_rub": 18693.0,
+      "cash_three_cycles_average_rub": 14927.0,
+      "additional_cash_second_cycle_rub": 14545.0
+    },
+    "B": {
+      "selected": [
+        "C01",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C15"
+      ],
+      "purchase_cash_rub": 17009.0,
+      "consumed_cost_rub": 14297.595257451949,
+      "leftover_value_rub": 2711.404742548053,
+      "high_risk_leftover_value_rub": 1838.0678492020736,
+      "suppliers": 6,
+      "ingredient_count": 15,
+      "shared_nonuniversal_fraction": 0.6069089483211553,
+      "unique_nonuniversal_ingredients": 8,
+      "expensive_specific_recipes": 0,
+      "expensive_threshold_rub": 581.75,
+      "primary_roles": 8,
+      "classic_count": 3,
+      "unusual_count": 7,
+      "creamy_count": 1,
+      "min_material_margin_fraction": 0.6058419368910862,
+      "review_evidence_score": 12.42453324894,
+      "strict_mentions_sum": 36,
+      "expensive_recipe_ids": "",
+      "balanced_score": 0.9983113456464379,
+      "optional_delivery_scenario_rub": 1500,
+      "optional_consumables_scenario_rub": 200,
+      "cash_with_optional_scenarios_rub": 18709.0,
+      "cash_three_cycles_average_rub": 15186.0,
+      "additional_cash_second_cycle_rub": 14561.0
+    },
+    "C": {
+      "selected": [
+        "C01",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C09",
+        "C10",
+        "C11",
+        "C15"
+      ],
+      "purchase_cash_rub": 18311.0,
+      "consumed_cost_rub": 14700.384355866432,
+      "leftover_value_rub": 3610.615644133568,
+      "high_risk_leftover_value_rub": 1938.6929234742067,
+      "suppliers": 6,
+      "ingredient_count": 16,
+      "shared_nonuniversal_fraction": 0.31993872913799215,
+      "unique_nonuniversal_ingredients": 10,
+      "expensive_specific_recipes": 2,
+      "expensive_threshold_rub": 581.75,
+      "primary_roles": 7,
+      "classic_count": 3,
+      "unusual_count": 7,
+      "creamy_count": 1,
+      "min_material_margin_fraction": 0.6058419368910862,
+      "review_evidence_score": 11.672494550551864,
+      "strict_mentions_sum": 37,
+      "expensive_recipe_ids": "C03|C07",
+      "balanced_score": 0.5195181606290589,
+      "optional_delivery_scenario_rub": 1500,
+      "optional_consumables_scenario_rub": 200,
+      "cash_with_optional_scenarios_rub": 20011.0,
+      "cash_three_cycles_average_rub": 15774.666666666666,
+      "additional_cash_second_cycle_rub": 13819.0
+    }
+  },
+  "ingredients_csv": "ingredient_id,name,supplier,package_price_rub,package_quantity,unit,checked_at,url,price_status,region_status,procurement_unit_status,perishability,universal,note\nvodka,Водка Градус Арктик 40%,Декантер СПб,726,500,ml,2026-10-15,https://spb.decanter.ru/vodka/05-l,observed_public_page,SPb,fixed_package,low,1,Карточка каталога 0.5 л; уточнить наличие; сайт предупреждает об обновлении цен; розничный ориентир\nsugar,Сахарный песок,АкваБалт,71,1,kg,2026-10-15,https://aquabalt.ru/catalog/k-chayu/saharnyy-pesok--1-kg,observed_public_page,SPb,fixed_package,low,1,Цена страницы 71 р за 1 кг; доставка и договорные скидки не включены\nwater,Вода питьевая негазированная,ВкусВилл,117,5,l,2026-10-15,https://vkusvill.ru/goods/voda-pitevaya-negazirovannaya-79663/,observed_public_page,region_not_selected,fixed_package,low,1,Цена зависит от региона; контроль фактического магазина СПб требуется\nhoney,Мёд цветочный Майское разнотравье,ВкусВилл,274,200,g,2026-10-15,https://vkusvill.ru/goods/med-tsvetochnyy-mayskoe-raznotrave-110171/,observed_public_page,region_not_selected,fixed_package,low,0,При повторном открытии показано 274 р вместо 260 р поискового кэша; использована открытая страница\nhorseradish,Хрен корень,Мультифрукт СПб,1900,1,kg,2026-10-15,https://multifrukt-spb.ru/products/246,observed_public_page,SPb,assumed_1kg_order_unit,high,0,Опубликована ставка 1900 р/кг; модель округляет заказ до кг; минимальная фасовка не подтверждена\nlemon,Лимоны целые,ФрутСтар,20,100,g,2026-10-15,https://frutstar.ru/fruits/citrusovye/limony,observed_live_page,SPb,approx_weight_increment,high,0,20 р за примерно 100 г; ставка 200 р/кг; шаг 100 г расчётный; целые плоды могут отличаться по массе\ncherry,Вишня без косточки замороженная,Дарим Лето,572,1,kg,2026-10-15,https://darim-leto.ru/catalog/vishnya,observed_public_page,SPb,fixed_package,medium,0,Локатор Вишня без косточки 1кг; не путать с 307 р за вариант с косточкой; условия минимального заказа уточнить\nraspberry,Малина целая замороженная,Дарим Лето,838,1,kg,2026-10-15,https://darim-leto.ru/catalog/malina,observed_live_page,SPb,fixed_package,medium,0,Локатор Малина целая 1кг; крошка и Грис не подменяют выбранное сырьё\nsorrel,Щавель свежий,ФрутСтар,99,100,g,2026-10-15,https://frutstar.ru/greens/zelen/schavel,observed_live_page,SPb,approx_weight_increment,high,0,99 р за примерно 100 г; ставка 990 р/кг; закупочный шаг модельный\nhalva,Халва подсолнечная,ВкусВилл,83,250,g,2026-10-15,https://vkusvill.ru/goods/khalva-podsolnechnaya-102828/,observed_public_page,region_not_selected,fixed_package,medium,0,Розничная цена публичной страницы; регион СПб и состав конкретной партии уточнить\nblueberry,Черника замороженная,Дарим Лето,958,1,kg,2026-10-15,https://darim-leto.ru/catalog/chernika,observed_live_page,SPb,fixed_package,medium,0,Локатор Черника 1кг; вариант Черника садовая 536 р не подменяет выбранную ягоду\ncream_cheese,Сыр творожный Almette Сливочный 60%,ВкусВилл,248,150,g,2026-10-15,https://vkusvill.ru/goods/syr-tvorozhnyy-almette-slivochnyy-60-150-g-54204/,observed_public_page,region_not_selected,fixed_package,high,0,Регулярная показанная цена 248 р; акционная 159 р по карте до 31.10 в базу не включена; вид сыра является модельным выбором\npassionfruit,Пюре маракуйя,Лёд Ледайс,982,1,kg,2026-10-15,https://ledice.ru/pure/,observed_public_page,SPb,fixed_package,medium,0,Локатор Пюре Маракуйя 1 кг 982 руб/кг; натуральность и долю сахара уточнить у поставщика\napple,Яблоко замороженное кубик,Дарим Лето,298,1,kg,2026-10-15,https://darim-leto.ru/catalog/yabloko,observed_live_page,SPb,fixed_package,medium,0,Публичная карточка фасовки 1кг; применение замороженного яблока в модели требует пробной партии\nbasil,Базилик зелёный свежий,ФрутСтар,299,100,g,2026-10-15,https://frutstar.ru/greens/zelen/bazilik-zelenyj,observed_live_page,SPb,approx_weight_increment,high,0,299 р за примерно 100 г; ставка 2990 р/кг; шаг закупки модельный\nbeet,Свёкла свежая,ФрутСтар,49,1,kg,2026-10-15,https://frutstar.ru/vegetables/svekla/svekla-sv,observed_live_page,SPb,weighed_1kg_order_unit,high,0,49 р за 1 кг; масса закупки округляется до целого шага заказа\nstrawberry,Клубника замороженная,Дарим Лето,296,1,kg,2026-10-15,https://darim-leto.ru/catalog/klubnika,observed_live_page,SPb,fixed_package,medium,0,Локатор Клубника замороженная 1кг; кубик 285 р не используется\ncream,Сливки 10%,ВкусВилл,152,450,ml,2026-10-15,https://vkusvill.ru/goods/slivki-10-1225/,observed_public_page,region_not_selected,fixed_package,high,0,Именно 450 мл; упаковки в граммах не пересчитываются в мл без измерения плотности\nsea_buckthorn,Облепиха замороженная,Дарим Лето,280,1,kg,2026-10-15,https://darim-leto.ru/catalog/oblepiha,observed_live_page,SPb,fixed_package,medium,0,Локатор Облепиха 1кг; садовая 335 р не используется\ncranberry,Клюква замороженная,Дарим Лето,585,1,kg,2026-10-15,https://darim-leto.ru/catalog/klyukva,observed_live_page,SPb,fixed_package,medium,0,Локатор Клюква 1кг; садовая 501 р не подменяет выбранное сырьё\ntomato,Томаты замороженные кубик,Дарим Лето,175,1,kg,2026-10-15,https://darim-leto.ru/products,observed_public_page,SPb,fixed_package,medium,0,Локатор Томаты замороженные кубик 1кг; страница каталога; рецепт томатной модельный\n",
+  "recipe_sources": {
+    "checked_at": "2026-10-15",
+    "scope": "Опубликованные количественные ориентиры не раскрывают состав напитка из отзыва. Полные тексты и технологии не копируются. Сценарий производства хранится в config.json.",
+    "recipes": [
+      {
+        "candidate_id": "C01",
+        "source_url": "https://www.iamcook.ru/showrecipe/26613",
+        "source_status": "published_ranges",
+        "facts": "Основа 500 мл; хрен 50–100 г; мёд от 0 до 1–1.5 столовой ложки.",
+        "composition_status": "model_adaptation",
+        "note": "Выбраны 60 г хрена и 20 г мёда как сценарий; перевод ложек в граммы не выдаётся за факт."
+      },
+      {
+        "candidate_id": "C02",
+        "source_url": "https://www.edimdoma.ru/retsepty/60273-vishnevaya-nastoyka",
+        "source_status": "published_incomplete",
+        "facts": "Сахар 1 кг; водка 5 л; вишня по вкусу.",
+        "composition_status": "model_adaptation",
+        "note": "Количество вишни не определено источником; 350 г на 500 мл основы и 100 г сахара — модель."
+      },
+      {
+        "candidate_id": "C03",
+        "source_url": "https://alcofan.com/recepty-nastoek-maliny-na-vodke-i-konyake.html",
+        "source_status": "published_other_proportions",
+        "facts": "Свежая малина 3.5 кг; основа 1 л; сахар до 250 г; вода до 200 мл.",
+        "composition_status": "model_adaptation",
+        "note": "В модели другая концентрация и замороженное сырьё; опубликованный рецепт не назван подтверждением модельных дозировок."
+      },
+      {
+        "candidate_id": "C04",
+        "source_url": "https://alcofan.com/prigotovlenie-domashnego-limonchello.html",
+        "source_status": "published_partial_units",
+        "facts": "На 700 мл водки: 5 крупных либо 8 средних лимонов; сахар 400–500 г; вода 300 мл; примерно 7 дней плюс 5–6 дней стабилизации.",
+        "composition_status": "model_adaptation",
+        "note": "Масса целых лимонов 700 г и выбранные 400 г сахара — параметры сценария. Покупка лимонов оплачивается целиком; мякоть не считается уже реализованным доходом."
+      },
+      {
+        "candidate_id": "C05",
+        "source_url": "https://alcofan.com/kak-sdelat-nastojku-iz-shhavelya-na-vodke.html",
+        "source_status": "published_quantities",
+        "facts": "Щавель 100 г; мёд 100 г; основа 500 мл; 14 дней и 1–2 дня стабилизации.",
+        "composition_status": "published_quantities",
+        "note": "Количества воспроизведены; фактический выход и потери не опубликованы и не измерены."
+      },
+      {
+        "candidate_id": "C06",
+        "source_url": "https://www.rbc.ru/wine/news/6718b1f19a7947d25d9a065a",
+        "source_status": "published_quantities",
+        "facts": "Раздел Халва: халва 600 г; мёд 90 г; водка 500 мл; отдых сутки.",
+        "composition_status": "published_quantities",
+        "note": "В модели выбран подсолнечный вид халвы; источник вид не фиксирует. Выход не опубликован."
+      },
+      {
+        "candidate_id": "C07",
+        "source_url": null,
+        "source_status": "not_found",
+        "facts": null,
+        "composition_status": "model_only",
+        "note": "Коммерческий состав неизвестен; выбран собственный расчётный вариант с творожным сыром. Дозировки и устойчивость не подтверждены."
+      },
+      {
+        "candidate_id": "C08",
+        "source_url": null,
+        "source_status": "not_found",
+        "facts": null,
+        "composition_status": "model_only",
+        "note": "Сценарий на покупном пюре; не подтверждённая рецептура заведения. Нужны состав пюре и проба."
+      },
+      {
+        "candidate_id": "C09",
+        "source_url": null,
+        "source_status": "not_found",
+        "facts": null,
+        "composition_status": "model_only",
+        "note": "Собственный сценарий яблока с базиликом; ни пропорции ни коммерческая технология не восстановлены."
+      },
+      {
+        "candidate_id": "C10",
+        "source_url": null,
+        "source_status": "not_found",
+        "facts": null,
+        "composition_status": "model_only",
+        "note": "Собственный сценарий свёклы с хреном; не копия состава конкурента."
+      },
+      {
+        "candidate_id": "C11",
+        "source_url": null,
+        "source_status": "not_found",
+        "facts": null,
+        "composition_status": "model_only",
+        "note": "Собственный сценарий клубники с базиликом; рецепт по единственному отзыву не восстановим."
+      },
+      {
+        "candidate_id": "C12",
+        "source_url": null,
+        "source_status": "not_found",
+        "facts": null,
+        "composition_status": "model_only",
+        "note": "Собственный расчётный сливочный состав; физическая стабильность и срок хранения не проверены."
+      },
+      {
+        "candidate_id": "C13",
+        "source_url": "https://www.rbc.ru/wine/news/6718b1f19a7947d25d9a065a",
+        "source_status": "published_quantities",
+        "facts": "Раздел Облепиха: ягоды 500 г; сахар 75 г либо мёд 150 г; основа 500 мл; 20–25 дней.",
+        "composition_status": "published_quantities",
+        "note": "Выбран сахарный вариант и замороженная ягода; выход и потери сценарные."
+      },
+      {
+        "candidate_id": "C14",
+        "source_url": "https://povar.ru/recipes/kliukovka-88873.html",
+        "source_status": "published_quantities",
+        "facts": "Клюква 250 г; водка 500 мл; сахар 150 г; настаивание 3 недели.",
+        "composition_status": "published_quantities",
+        "note": "Опубликованные количества; выход и потери требуют измерений."
+      },
+      {
+        "candidate_id": "C15",
+        "source_url": null,
+        "source_status": "not_found",
+        "facts": null,
+        "composition_status": "model_only",
+        "note": "Состав простой томатной неизвестен; модель на томатах не означает реконструкцию напитка из отзыва."
+      }
+    ],
+    "limitations": "Ни одна позиция не имеет проверенной в баре технологической карты. Четыре опубликованных количественных состава тоже требуют адаптации сырья и пробных партий. Медицинские и сроки хранения из бытовых рецептов в модель не переносятся. Подтверждённых рецептур с измеренным выходом — ноль."
+  },
+  "result_files_sha256": {
+    "data/economics/results/candidate_evidence.csv": "37ce4afdf2ca08520213015301efc1dd13b0bf8d6d1d32b980dead0070862e51",
+    "data/economics/results/candidates.csv": "d548409bbff8d935a13b480487dcaa181855c126a615608c3877c93d7ffdc2dd",
+    "data/economics/results/flavor_matrix.csv": "4687362c76f1c5edc15cfd586de08be091f248ce872f11870c4e6f7dc688fb5c",
+    "data/economics/results/ingredient_matrix.csv": "dd4e7d85628201bf42896d161c8d869117ca1e1c5ee03d4900facbd193b6a00c",
+    "data/economics/results/ingredient_price_sensitivity.csv": "a8629e06d2ef03a93813fe5f4123ac81a7a9e240e11f9802b118c77ec26da17a",
+    "data/economics/results/menu_items.csv": "b720d7a67a4a2f96b5f64cbe97e2c81cb724a8f64e2e3b9a1c542128ea421c84",
+    "data/economics/results/menu_summary.csv": "3ec85c30fad618236908322501c41c5e84fe6f3e0da7ed0281b80d0288b00e9c",
+    "data/economics/results/packaging_scenario.csv": "9c60ac229ff32e83a38fd2dde030558db512df37bf2d2c790d893309d9996070",
+    "data/economics/results/price_catalog.csv": "5022e746c86a1f320b43ba9f2334a532de91d246afdf8b23fc840d38ce2c8a0a",
+    "data/economics/results/price_scenarios.csv": "1e526eaf96aaa8ae53d1416be67e4b9aff5aa1869bc1e6fe8d2e5ffec4fdf13e",
+    "data/economics/results/procurement.csv": "47d3105c7860b9f44032e8deca6add166f50f19312b230cb4330f59e4b89eb37",
+    "data/economics/results/recipe_costs.csv": "13b1d0355e8e5bce437b486e9ab8ec2cd6ba046d8ae68e8b563ca698cf48b9c8",
+    "data/economics/results/sensitivity.csv": "aa3adb355e62b730f5803daa60c99bbc7adc39739301d39341568286f87d4713",
+    "data/economics/results/stress_menu_scenarios.csv": "31aed16b321ea3b2172ebb42d896b67027de02090a666847dfa9903bfccd5496",
+    "data/economics/results/substitutions.csv": "e0060df5738d660359bf2314afb2ba4e12f3c52b51e8bd04926bec98f64632a7",
+    "data/economics/results/summary.json": "3950013f1feab8286c7b45a329bba3a7880da72bab040a7c9162a073ee481892"
+  },
+  "prices_scenarios_csv": "menu,price_pair,scenario,premium_share,basic_price_rub,premium_price_rub,simple_menu_price_rub,weighted_price_rub,weighted_material_cost_50ml_rub,material_margin_50ml_rub,material_margin_fraction,required_premium_share_for_250,target_met,sales_status\nA,0,low,0.05,230,330,250.0,235.0,71.6085837310565,163.3914162689435,0.6952826224210361,0.2,False,scenario_not_observed\nA,0,base,0.2,230,330,250.0,250.0,70.99795498044156,179.00204501955844,0.7160081800782337,0.2,True,scenario_not_observed\nA,0,high,0.35,230,330,250.0,265.0,70.38732622982661,194.6126737701734,0.7343874481893335,0.2,True,scenario_not_observed\nA,1,low,0.05,240,340,260.0,245.0,71.6085837310565,173.3914162689435,0.707720066403851,0.1,False,scenario_not_observed\nA,1,base,0.2,240,340,260.0,260.0,70.99795498044156,189.00204501955844,0.7269309423829171,0.1,True,scenario_not_observed\nA,1,high,0.35,240,340,260.0,275.0,70.38732622982661,204.6126737701734,0.7440460864369941,0.1,True,scenario_not_observed\nA,2,low,0.05,250,350,270.0,255.0,71.6085837310565,183.3914162689435,0.7191820245840921,0.0,True,scenario_not_observed\nA,2,base,0.2,250,350,270.0,270.0,70.99795498044156,199.00204501955844,0.7370446111835498,0.0,True,scenario_not_observed\nA,2,high,0.35,250,350,270.0,285.0,70.38732622982661,214.6126737701734,0.7530269255093803,0.0,True,scenario_not_observed\nB,0,low,0.05,230,330,250.0,235.0,72.19048403290309,162.8095159670969,0.6928064509238165,0.2,False,scenario_not_observed\nB,0,base,0.2,230,330,250.0,250.0,71.48797628725974,178.51202371274024,0.714048094850961,0.2,True,scenario_not_observed\nB,0,high,0.35,230,330,250.0,265.0,70.7854685416164,194.2145314583836,0.7328850243712588,0.2,True,scenario_not_observed\nB,1,low,0.05,240,340,260.0,245.0,72.19048403290309,172.8095159670969,0.7053449631310078,0.1,False,scenario_not_observed\nB,1,base,0.2,240,340,260.0,260.0,71.48797628725974,188.51202371274024,0.725046245049001,0.1,True,scenario_not_observed\nB,1,high,0.35,240,340,260.0,275.0,70.7854685416164,204.2145314583836,0.742598296212304,0.1,True,scenario_not_observed\nB,2,low,0.05,250,350,270.0,255.0,72.19048403290309,182.8095159670969,0.7169000626160663,0.0,True,scenario_not_observed\nB,2,base,0.2,250,350,270.0,270.0,71.48797628725974,198.51202371274024,0.7352297174545935,0.0,True,scenario_not_observed\nB,2,high,0.35,250,350,270.0,285.0,70.7854685416164,214.2145314583836,0.7516299349416968,0.0,True,scenario_not_observed\nC,0,low,0.05,230,330,250.0,235.0,72.69397040592119,162.3060295940788,0.6906639557194842,0.2,False,scenario_not_observed\nC,0,base,0.2,230,330,250.0,250.0,73.50192177933218,176.49807822066782,0.7059923128826713,0.2,True,scenario_not_observed\nC,0,high,0.35,230,330,250.0,265.0,74.30987315274314,190.69012684725686,0.7195853843292712,0.2,True,scenario_not_observed\nC,1,low,0.05,240,340,260.0,245.0,72.69397040592119,172.3060295940788,0.7032899167105258,0.1,False,scenario_not_observed\nC,1,base,0.2,240,340,260.0,260.0,73.50192177933218,186.49807822066782,0.7173003008487224,0.1,True,scenario_not_observed\nC,1,high,0.35,240,340,260.0,275.0,74.30987315274314,200.69012684725686,0.7297822794445704,0.1,True,scenario_not_observed\nC,2,low,0.05,250,350,270.0,255.0,72.69397040592119,182.3060295940788,0.7149256062512894,0.0,True,scenario_not_observed\nC,2,base,0.2,250,350,270.0,270.0,73.50192177933218,196.49807822066782,0.7277706600765474,0.0,True,scenario_not_observed\nC,2,high,0.35,250,350,270.0,285.0,74.30987315274314,210.69012684725686,0.7392636029728311,0.0,True,scenario_not_observed\n"
+}
