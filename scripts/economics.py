@@ -308,7 +308,7 @@ def run(render=True, data=DATA, out=OUT):
     for name,rows in tables.items():write_csv(out/name,rows)
     payload={"scenario_date":inputs[4]["scenario_date"],"selection_source":"author_selected_menu.csv","recipes_source":"recipes.json","yields_source":"yields.csv","prices_source":"ingredients.csv","production_source":"production_plan.json","optimizer_called":False,"all_initial_yields_estimated":all(x["yield_status"]=="estimated" for x in inputs[2].values()),**summary}
     (out/"summary.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2,default=str)+"\n",encoding="utf-8",newline="\n")
-    manifest={"inputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(data.glob('*')) if p.is_file()},"outputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.glob('*')) if p.is_file() and p.name!='run_manifest.json'}}
+    manifest={"inputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(data.glob('*')) if p.is_file() and p.name != 'menu_raw_material_costs.csv'},"outputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.glob('*')) if p.is_file() and p.name!='run_manifest.json'}}
     (out/"run_manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8",newline="\n")
     if render:
         from scripts import report
