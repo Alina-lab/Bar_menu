@@ -1,0 +1,34 @@
+{
+  "scenario_date": "2026-10-16",
+  "launch_date": null,
+  "serving_ml": 50,
+  "evenings": [
+    "Пятница",
+    "Суббота"
+  ],
+  "servings_per_flavor_per_evening": 60,
+  "sell_through_scenarios": [
+    "0.50",
+    "0.70",
+    "0.90",
+    "1.00"
+  ],
+  "premium_sales_share_scenarios": [
+    "0.05",
+    "0.20",
+    "0.35"
+  ],
+  "price_shocks": [
+    "-0.10",
+    "0",
+    "0.10",
+    "0.20"
+  ],
+  "yield_multipliers": [
+    "0.80",
+    "0.90",
+    "1.00",
+    "1.10"
+  ],
+  "source_ref": "docs/author_specification.md"
+}

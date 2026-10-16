@@ -4,3 +4,5 @@ __pycache__/
 ~$*.xlsx
 .DS_Store
 *.tmp
+.pytest_cache/
+.ipynb_checkpoints/

@@ -1,0 +1,11 @@
+candidate_id,normalized_flavor,tier,price_50ml_rub,selection_status
+C01,Хреновуха,basic,250,author_selected_final
+C02,Вишня,basic,250,author_selected_final
+C03,Малина,basic,250,author_selected_final
+C04,Лимончелло,basic,250,author_selected_final
+C05,Щавель,basic,250,author_selected_final
+C09,Яблоко — базилик,basic,250,author_selected_final
+C13,Облепиха,basic,250,author_selected_final
+C14,Клюква,basic,250,author_selected_final
+C06,Халва,premium,300,author_selected_final
+C12,Малина — сливки,premium,300,author_selected_final
