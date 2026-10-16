@@ -1,0 +1,253 @@
+"""Проверка публичных выгрузок и сборка меню; исходных рецептур здесь нет."""
+import argparse
+import csv
+import hashlib
+import ipaddress
+import os
+import socket
+import sys
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from pathlib import Path
+
+getcontext().prec = 50
+ROOT = Path(__file__).resolve().parents[1]
+D = Decimal
+ARTIFACTS = ("results/menu_preview.png", "results/cost_50ml.png", "results/nastoyka_menu.pdf")
+PREMIUM = {"C06", "C12"}
+INK, ACCENT, PAPER = "#3D303A", "#7A805E", "#FCF9F2"
+MENU_GROUPS = (
+    ("Сладкие и десертные", ("C02", "C03", "C06", "C12")),
+    ("Кислые и освежающие", ("C04", "C05", "C13", "C14")),
+    ("Свежие и травяные", ("C09",)),
+    ("Острые и пряные", ("C01",)),
+)
+
+
+def read_csv(name):
+    with (ROOT / name).open(encoding="utf-8-sig", newline="") as stream:
+        return list(csv.DictReader(stream))
+
+
+def number(value):
+    return D(str(value).replace("\u00a0", "").replace(" ", "").replace(",", "."))
+
+
+def fmt(value, digits=2):
+    value = number(value).quantize(D(1).scaleb(-digits), rounding=ROUND_HALF_UP)
+    return f"{value:,.{digits}f}".replace(",", " ").replace(".", ",")
+
+
+def research_summary():
+    """Повторить прежние определения срезов из исходного Excel, не меняя книгу."""
+    from openpyxl import load_workbook
+    with (ROOT / "data/nastoyki_reviews.xlsx").open("rb") as stream:
+        workbook = load_workbook(stream, read_only=True, data_only=True)
+        def rows(sheet):
+            values = workbook[sheet].iter_rows(values_only=True)
+            header = next(values)
+            return [dict(zip(header, row)) for row in values if any(v is not None for v in row)]
+        venues = rows("Заведения")
+        reviews = rows("Отзывы")
+        mentions = rows("Упоминания вкусов")
+        workbook.close()
+    verified = [r for r in reviews if r["source_status"] == "verified" and not r["duplicate_of"]]
+    review_map = {r["ID отзыва"]: r for r in verified}
+    venue_map = {r["venue_id"]: r for r in venues}
+    concrete = [m for m in mentions if m["source_status"] == "verified"
+                and m["ID отзыва"] in review_map and m["specificity"] == "concrete"]
+    strict = [m for m in concrete if m["confidence"] == "high"
+              and venue_map[m["venue_id"]]["sample_current"] == "yes"
+              and review_map[m["ID отзыва"]]["platform_verification"] != "not_passed"
+              and not review_map[m["ID отзыва"]].get("bias_flag")]
+    return {
+        "venues_total": len(venues), "current_sample": sum(v["sample_current"] == "yes" for v in venues),
+        "reviews_total": len(reviews), "reviews_verified": len(verified),
+        "mentions_total": len(mentions), "concrete_mentions": len(concrete),
+        "concrete_reviews": len({m["ID отзыва"] for m in concrete}),
+        "flavors": len({m["normalized_flavor"] for m in concrete}),
+        "strict_mentions": len(strict), "strict_reviews": len({m["ID отзыва"] for m in strict}),
+    }
+
+
+def economics_summary():
+    """Итоги готовых публичных срезов; не пересчёт закрытых рецептур."""
+    menu = read_csv("data/menu_economics.csv")
+    purchases = read_csv("data/menu_raw_material_costs.csv")
+    used = sum((number(r["used_cost_rub"]) for r in menu), D(0))
+    cash = sum((number(r["Закупка, ₽"]) for r in purchases), D(0))
+    revenue = sum((number(r["price_50ml_rub"]) * number(r["portions"]) for r in menu), D(0))
+    return {"ready_liters": sum(number(r["target_ready_ml"]) for r in menu) / 1000,
+            "portions": sum(number(r["portions"]) for r in menu), "purchase_rub": cash,
+            "used_rub": used, "leftover_rub": cash-used, "revenue_rub": revenue,
+            "material_contribution_rub": revenue-used}
+
+
+def draw_vine(ax, x, y, width):
+    """Векторная виноградная ветвь: стебель, лопастные листья и гроздь."""
+    from math import cos, sin, radians
+    from matplotlib.path import Path as VectorPath
+    from matplotlib.patches import Circle, PathPatch
+
+    height = width * 210 / 297
+    def point(u, v):
+        return x + width * u, y + height * v
+
+    def curve(points, color=ACCENT, weight=.65):
+        path = VectorPath([point(*p) for p in points],
+                          [VectorPath.MOVETO] + [VectorPath.CURVE4] * (len(points)-1))
+        ax.add_patch(PathPatch(path, fill=False, edgecolor=color, linewidth=weight,
+                               capstyle="round", joinstyle="round"))
+
+    curve([(-.53, -.025), (-.28, .06), (.22, -.07), (.53, .035)], weight=.9)
+    # Each leaf has five broad lobes and fine veins, without raster artwork.
+    outline = [(0, 0), (-.28, .12), (-.55, .07), (-.45, .32), (-.76, .43),
+               (-.47, .56), (-.58, .78), (-.24, .73), (0, 1.03),
+               (.23, .73), (.56, .78), (.46, .54), (.73, .43), (.46, .30),
+               (.53, .08), (.26, .12), (0, 0)]
+    for u, v, angle, scale in [(-.34, .012, 27, .13), (-.10, .005, 155, .11),
+                                 (.12, -.009, -28, .125), (.35, .009, 207, .10)]:
+        rotation = radians(angle)
+        def leaf_point(a, b):
+            return point(u + scale*(a*cos(rotation)-b*sin(rotation)),
+                         v + scale*(a*sin(rotation)+b*cos(rotation)))
+        vertices = [leaf_point(*outline[0])]
+        codes = [VectorPath.MOVETO]
+        for index in range(1, len(outline)):
+            a, b = outline[index], outline[(index+1) % len(outline)]
+            vertices.extend([leaf_point(*a), leaf_point((a[0]+b[0])/2, (a[1]+b[1])/2)])
+            codes.extend([VectorPath.CURVE3, VectorPath.CURVE3])
+        vertices.append(vertices[0]); codes.append(VectorPath.CLOSEPOLY)
+        ax.add_patch(PathPatch(VectorPath(vertices, codes), facecolor="#E8E9DC",
+                               edgecolor=ACCENT, linewidth=.55, joinstyle="round"))
+        for tip in [(0, .84), (-.46, .43), (.44, .43)]:
+            a, b = leaf_point(0, 0), leaf_point(*tip)
+            ax.plot([a[0], b[0]], [a[1], b[1]], color=ACCENT, linewidth=.32)
+    curve([(.26, -.006), (.27, -.056), (.24, -.08), (.25, -.115)], weight=.5)
+    for row, count in enumerate([3, 3, 2, 1]):
+        for col in range(count):
+            u = .25 + (col-(count-1)/2)*.036
+            v = -.12-row*.033
+            cx, cy = point(u, v)
+            ax.add_patch(Circle((cx, cy), width*.017, transform=ax.transAxes,
+                                facecolor="#E8E0E7", edgecolor="#817080", linewidth=.45))
+    curve([(-.48, -.015), (-.59, -.055), (-.60, .09), (-.52, .075),
+           (-.46, .06), (-.52, .015), (-.55, .052)], weight=.55)
+    curve([(.46, .015), (.58, .11), (.62, -.045), (.54, -.04)], weight=.5)
+
+
+def build_artifacts():
+    os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "bar-menu-mpl"))
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    menu = read_csv("data/menu_economics.csv")
+    by_id = {row["candidate_id"]: row for row in menu}
+    ink, accent, paper = INK, ACCENT, PAPER
+    descriptions = {
+        "C01": "Хрен · имбирь · мёд", "C02": "",
+        "C03": "", "C04": "Лимонная цедра · сок",
+        "C05": "Щавель · мёд", "C09": "Зелёное яблоко · базилик",
+        "C13": "", "C14": "",
+        "C06": "Подсолнечная халва · мёд", "C12": "Малина · молоко · сливки",
+    }
+    (ROOT / "results").mkdir(exist_ok=True)
+    with plt.rc_context({"font.family": "DejaVu Sans", "pdf.fonttype": 42}):
+        fig = plt.figure(figsize=(210/25.4, 297/25.4), facecolor=paper)
+        ax = fig.add_axes([0, 0, 1, 1]); ax.axis("off")
+        ax.set(xlim=(0, 1), ylim=(0, 1))
+        ax.text(.5, .928, "НАСТОЙКИ", ha="center", fontsize=37,
+                fontfamily="DejaVu Serif", color=ink)
+        draw_vine(ax, .5, .865, .41)
+        ax.text(.5, .813, "50 мл", ha="center", fontsize=10.5, color=accent)
+        heading = .776
+        for label, ids in MENU_GROUPS:
+            ax.text(.115, heading, label.upper(), fontsize=8.8, color=accent)
+            ax.plot([.115, .885], [heading-.013, heading-.013], color="#D9D9C9", linewidth=.45)
+            y = heading-.041
+            for cid in ids:
+                row = by_id[cid]
+                ax.text(.115, y, row["normalized_flavor"], fontsize=15.2,
+                        fontfamily="DejaVu Serif", color=ink)
+                ax.text(.885, y, fmt(row["price_50ml_rub"], 0)+" ₽", fontsize=12.1,
+                        ha="right", color=ink)
+                if descriptions[cid]:
+                    ax.text(.115, y-.019, descriptions[cid], fontsize=8.2, color="#797176")
+                y -= .047
+            heading = y-.005
+        draw_vine(ax, .5, .081, .24)
+        fig.savefig(ROOT / ARTIFACTS[0], dpi=180, facecolor=paper)
+        fig.savefig(ROOT / ARTIFACTS[2], facecolor=paper,
+                    metadata={"Title": "Настойки — барное меню", "Author": "Bar_menu",
+                              "CreationDate": None, "ModDate": None})
+        plt.close(fig)
+        fig, ax = plt.subplots(figsize=(10, 6), facecolor=paper)
+        values = [float(number(r["cost_50ml_rub"])) for r in menu]
+        ax.barh([r["normalized_flavor"] for r in menu], values,
+                color=[accent if r["tier"] == "premium" else ink for r in menu], height=.65)
+        for i, row in enumerate(menu):
+            ax.text(values[i]+.4, i, fmt(row["cost_50ml_rub"])+" ₽", va="center", fontsize=9, color=ink)
+        ax.set(title="Сырьё одной порции · 50 мл", xlabel="Рубли", xlim=(0, max(values)*1.23))
+        ax.invert_yaxis(); ax.spines[["top", "right"]].set_visible(False)
+        ax.grid(axis="x", alpha=.1); ax.set_axisbelow(True)
+        ax.legend(handles=[Line2D([0], [0], color=ink, lw=7, label="Основные"),
+                           Line2D([0], [0], color=accent, lw=7, label="Премиальные")],
+                  frameon=False, loc="lower right", fontsize=9)
+        fig.text(.02, .025, "Ценовой сценарий 16.10.2026 · оценочные выходы · расчёт по готовой выгрузке", fontsize=8, color="#66736F")
+        fig.tight_layout(rect=[0, .06, 1, 1]); fig.savefig(ROOT / ARTIFACTS[1], dpi=160); plt.close(fig)
+
+
+def block_external_network():
+    def audit(event, args):
+        if event not in {"socket.connect", "socket.getaddrinfo"}:
+            return
+        if event == "socket.connect":
+            if args[0].family == socket.AF_UNIX:
+                return
+            host = args[1][0]
+        else:
+            host = args[0]
+        if host in {None, "localhost"}:
+            return
+        try:
+            if ipaddress.ip_address(host).is_loopback:
+                return
+        except ValueError:
+            pass
+        raise RuntimeError("Публичный Notebook не должен обращаться к внешней сети")
+    sys.addaudithook(audit)
+
+
+def check_public_notebook(save=False):
+    import nbformat
+    from nbclient import NotebookClient
+    before = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ARTIFACTS}
+    block_external_network(); build_artifacts()
+    notebook = nbformat.read(ROOT / "bar_menu_analysis.ipynb", as_version=4)
+    cells = [c for c in notebook.cells if c.cell_type == "code"]
+    for cell in cells:
+        cell.outputs = []; cell.execution_count = None
+    original = cells[0].source
+    cells[0].source = "from scripts.portfolio import block_external_network\nblock_external_network()\n" + original
+    NotebookClient(notebook, timeout=180, kernel_name="python3",
+                   resources={"metadata": {"path": str(ROOT)}}).execute()
+    cells[0].source = original
+    if save:
+        nbformat.write(notebook, ROOT / "bar_menu_analysis.ipynb")
+    after = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ARTIFACTS}
+    if before != after:
+        raise RuntimeError("PDF/PNG отличаются от сохранённых результатов")
+    print(f"Public notebook: {len(cells)} cells, fresh kernel, no errors; PDF/PNG reproduced")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--save-notebook", action="store_true")
+    args = parser.parse_args()
+    if args.check or args.save_notebook:
+        check_public_notebook(save=args.save_notebook)
+    else:
+        build_artifacts()

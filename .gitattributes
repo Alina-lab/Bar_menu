@@ -1,0 +1,3 @@
+# Preserve protected source bytes (including existing CSV line endings) on Windows.
+* -text
+*.csv whitespace=cr-at-eol

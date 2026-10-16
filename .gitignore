@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+~$*.xlsx
+.DS_Store
+*.tmp
+.pytest_cache/
+.ipynb_checkpoints/
+private*/
+*.zip
+*.bundle
