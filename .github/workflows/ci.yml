@@ -1,10 +1,10 @@
-name: Project checks
+name: Public portfolio checks
 
 on:
   pull_request:
     branches: [main]
   push:
-    branches: [analysis/menu-economics]
+    branches: [chore/portfolio-cleanup]
 
 permissions:
   contents: read
@@ -25,15 +25,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install Python dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Run tests
+      - run: python -m pip install -r requirements.txt
+      - name: Check public data, menu and excluded technical materials
         run: python -m pytest -q
-      - name: Validate protected workbook
-        run: python scripts/workbook.py validate
-      - name: Regenerate offline and execute both notebooks in fresh kernels
-        run: python scripts/verify.py
-      - name: Require committed generated results
+      - name: Rebuild PDF/PNG and execute the public notebook offline
+        run: python scripts/portfolio.py --check
+      - name: Require committed results
         run: |
           git diff --exit-code
           test -z "$(git ls-files --others --exclude-standard)"

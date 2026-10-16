@@ -6,3 +6,6 @@ __pycache__/
 *.tmp
 .pytest_cache/
 .ipynb_checkpoints/
+private*/
+*.zip
+*.bundle
