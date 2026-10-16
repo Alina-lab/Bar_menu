@@ -88,4 +88,4 @@ def test_presentational_notebook_runs_without_recipes():
     for row in e.read_csv(e.DATA/'author_selected_menu.csv'):
         assert row['normalized_flavor'] in outputs
     assert sum('image/png' in o.get('data',{}) for c in cells for o in c.outputs)>=3
-    assert '[Итоговое меню и презентация](nastoyka_menu.ipynb)' in (e.ROOT/'README.md').read_text(encoding='utf-8')
+    assert '[Посмотреть готовое меню](nastoyka_menu.ipynb)' in (e.ROOT/'README.md').read_text(encoding='utf-8')
