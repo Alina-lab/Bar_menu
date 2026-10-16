@@ -282,11 +282,40 @@ def calendar(inputs):
     return rows
 
 
-def write_csv(path, rows):
+def write_csv(path, rows, encoding="utf-8"):
     columns=list(dict.fromkeys(k for row in rows for k in row))
-    with path.open("w",newline="",encoding="utf-8") as stream:
+    with path.open("w",newline="",encoding=encoding) as stream:
         writer=csv.DictWriter(stream,fieldnames=columns);writer.writeheader()
         writer.writerows([{k:"" if v is None else str(v) if isinstance(v,D) else v for k,v in row.items()} for row in rows])
+
+
+def menu_raw_material_rows(basket):
+    """Сводка общей закупки без дозировок и привязки к отдельным рецептурам."""
+    def shown(value, digits=2):
+        if value is None:
+            return ""
+        rounded=D(value).quantize(D(1).scaleb(-digits),rounding=ROUND_HALF_UP)
+        return f"{rounded:,.{digits}f}".replace(","," ").replace(".",",")
+
+    rows=[]
+    for row in basket:
+        unit="кг" if row["base_unit"]=="g" else "л"
+        rows.append({
+            "Поставщик":row["supplier"],"Сырьё":row["product"],
+            "Плановая потребность":shown(row["needed_quantity"]/1000,3),
+            "Плановая закупка":shown(row["purchased_quantity"]/1000,3),"Единица":unit,
+            "Упаковка":shown(D(row["pack_size_base"])/1000,3)+" "+unit,
+            "Количество упаковок":row["packs_to_buy"],
+            "Цена упаковки, ₽":shown(row["effective_pack_price_rub"]),
+            "Закупка, ₽":shown(row["purchase_cost_rub"]),
+            "Израсходованное сырьё, ₽":shown(row["used_cost_rub"]),
+            "Остаток, количество":shown(row["leftover_quantity"]/1000,3),
+            "Остаток сырья, ₽":shown(row["leftover_value_rub"]),
+            "Статус цены":row["confirmation_status"],
+            "Применение цены":row["applied_price_status"],
+            "Источник цены":row["applied_price_source"],
+        })
+    return rows
 
 
 def run(render=True, data=DATA, out=OUT):
@@ -306,9 +335,12 @@ def run(render=True, data=DATA, out=OUT):
     tables["suppliers.csv"]=suppliers
     for name, rows in zip(["sales_scenarios.csv","premium_mix.csv","price_sensitivity.csv","yield_sensitivity.csv"],scenario_tables(inputs,base)):tables[name]=rows
     for name,rows in tables.items():write_csv(out/name,rows)
+    # Временные проверки не меняют рабочий презентационный экспорт.
+    menu_costs_path=(data if data==DATA and out==OUT else out)/"menu_raw_material_costs.csv"
+    write_csv(menu_costs_path,menu_raw_material_rows(basket),encoding="utf-8-sig")
     payload={"scenario_date":inputs[4]["scenario_date"],"selection_source":"author_selected_menu.csv","recipes_source":"recipes.json","yields_source":"yields.csv","prices_source":"ingredients.csv","production_source":"production_plan.json","optimizer_called":False,"all_initial_yields_estimated":all(x["yield_status"]=="estimated" for x in inputs[2].values()),**summary}
     (out/"summary.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2,default=str)+"\n",encoding="utf-8",newline="\n")
-    manifest={"inputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(data.glob('*')) if p.is_file() and p.name != 'menu_raw_material_costs.csv'},"outputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.glob('*')) if p.is_file() and p.name!='run_manifest.json'}}
+    manifest={"inputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(data.glob('*')) if p.is_file() and p.name != 'menu_raw_material_costs.csv'},"outputs_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.glob('*')) if p.is_file() and p.name!='run_manifest.json'},"menu_raw_material_costs_sha256":hashlib.sha256(menu_costs_path.read_bytes()).hexdigest()}
     (out/"run_manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8",newline="\n")
     if render:
         from scripts import report

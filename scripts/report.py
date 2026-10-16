@@ -62,6 +62,49 @@ def table(headers, rows):
     return "| "+" | ".join(headers)+" |\n| "+" | ".join(["---"]*len(headers))+" |\n"+"\n".join("| "+" | ".join(str(v).replace("|"," / ") for v in row)+" |" for row in rows)
 
 
+def menu_card_image(menu):
+    """PNG-карточки сохраняют оформление и в Jupyter, и в просмотрщике GitHub."""
+    from io import BytesIO
+    from textwrap import fill
+    from matplotlib.patches import FancyBboxPatch
+
+    descriptions={
+        "C01":"Хрен, имбирь и мёд · Пряная",
+        "C02":"Вишня без косточек · Ягодная",
+        "C03":"Малина · Ягодная",
+        "C04":"Цедра и сок лимонов · Цитрусовая",
+        "C05":"Щавель и мёд · Травяная",
+        "C09":"Зелёные яблоки и базилик · Фруктово-травяная",
+        "C13":"Облепиха · Ягодная",
+        "C14":"Клюква · Ягодная",
+        "C06":"Подсолнечная халва и мёд · Десертная",
+        "C12":"Малина, молоко и сливки · Сливочная",
+    }
+    navy="#233342";cream="#fffcf7";muted="#64727b";gold="#9f5836"
+    with plt.rc_context({"font.family":"DejaVu Sans"}):
+        fig=plt.figure(figsize=(11,12),facecolor=cream)
+        ax=fig.add_axes([0,0,1,1]);ax.set_axis_off()
+        def panel(x,y,width,height,color,edge):
+            ax.add_patch(FancyBboxPatch((x,y),width,height,boxstyle="round,pad=0.008,rounding_size=0.012",
+                                       transform=ax.transAxes,facecolor=color,edgecolor=edge,linewidth=1))
+        panel(.045,.89,.91,.075,navy,navy)
+        ax.text(.065,.936,"НАСТОЙКА",fontsize=25,weight="bold",color="white",transform=ax.transAxes)
+        ax.text(.065,.907,"САНКТ-ПЕТЕРБУРГ · АВТОРСКАЯ КОЛЛЕКЦИЯ · 50 МЛ",fontsize=10,color="#eacaa9",transform=ax.transAxes)
+        for tier,label,top,heading in [("basic","ОСНОВНАЯ КОЛЛЕКЦИЯ · 8 ВКУСОВ",.81,.85),
+                                       ("premium","ДЕСЕРТНАЯ КОЛЛЕКЦИЯ · 2 ПРЕМИАЛЬНЫХ ВКУСА",.205,.245)]:
+            ax.text(.045,heading,label,fontsize=12,weight="bold",color=navy,transform=ax.transAxes)
+            for index,row in enumerate(r for r in menu if r["tier"]==tier):
+                x=.045+(index%2)*.47;y=top-.12-(index//2)*.135
+                panel(x,y,.44,.12,"#f7f1e8" if tier=="premium" else "white","#e5d9ca")
+                ax.text(x+.018,y+.084,row["normalized_flavor"],fontsize=15,weight="bold",color=navy,transform=ax.transAxes)
+                ax.text(x+.421,y+.084,fmt(row["price_50ml_rub"],0)+" ₽",fontsize=17,weight="bold",color=gold,ha="right",transform=ax.transAxes)
+                ax.text(x+.018,y+.049,fill(descriptions[row["candidate_id"]],35),fontsize=10,color=muted,
+                        va="top",linespacing=1.5,transform=ax.transAxes)
+        ax.text(.045,.04,"Порция 50 мл · Малина — сливки содержит молочные продукты",fontsize=10,color=muted,transform=ax.transAxes)
+        buffer=BytesIO();fig.savefig(buffer,format="png",dpi=140,facecolor=cream);plt.close(fig)
+    return buffer.getvalue()
+
+
 def figures(inputs, base, tables):
     menu,recipes,yields,catalog,plan=inputs;items,lines,basket,s=base
     estimated=sum(r["yield_status"]=="estimated" for r in yields.values());measured=len(yields)-estimated
@@ -267,7 +310,7 @@ C12 требует 7 дней малиновой основы, фильтрац�
 
 Авторский план — **60 л / 1 200 порций**. Сценарный первый заказ — **{fmt(s['purchase_cost_rub'])} ₽**, средний расход сырья — **{fmt(e.times(s['used_cost_rub'],1/s['total_portions']))} ₽ на 50 мл**. Эта себестоимость не включает затраты на работу бара; равный выпуск не доказывает равный спрос.
 
-**[Notebook](assortment_economics.ipynb)** · **[Подробный отчёт](docs/economics_report.md)** · [Excel исследования](data/nastoyki_reviews.xlsx) · [PR №1](https://github.com/Alina-lab/Nastoyka/pull/1)
+**[Итоговое меню и презентация](nastoyka_menu.ipynb)** · [Технический Notebook](assortment_economics.ipynb) · **[Подробный отчёт](docs/economics_report.md)** · [Excel исследования](data/nastoyki_reviews.xlsx) · [PR №1](https://github.com/Alina-lab/Nastoyka/pull/1)
 
 ## Рынок и данные
 
@@ -317,6 +360,12 @@ C12 требует 7 дней малиновой основы, фильтрац�
 
 Согласование автором не заменяет измерение выхода, крепости или проверку хранения. У C12 14 дней — наблюдение автора, не подтверждённый безопасный срок. Условия поставки водки, пороги/магазин METRO, свежий необработанный хрен, доставка и минимумы заказов требуют проверки. Цены из старого архива не используются. Подробные технологии и риски — [в отчёте](docs/economics_report.md), формулы — [в методике экономики](docs/economics_methodology.md).
 
+## Итоговая презентация
+
+Главный документ — [nastoyka_menu.ipynb](nastoyka_menu.ipynb): карточки десяти напитков, цены за 50 мл, результаты исследования и экономика. Сохранённые таблицы и PNG видны на GitHub без запуска; Run All в Jupyter обновляет расчёты. [assortment_economics.ipynb](assortment_economics.ipynb) остаётся отдельным техническим документом.
+
+[menu_raw_material_costs.csv](data/economics/menu_raw_material_costs.csv) автоматически формируется тем же расчётом: 16 общих потребностей, поставщики, фасовки, применимые цены, затраты и остатки. В экспорте нет дозировок отдельных настоек и полных рецептов. Это результат модели, его не нужно редактировать вручную. CSV округляет только отображение; итоги рассчитываются до округления.
+
 ## Воспроизведение
 
 Python 3.12; Python, pandas, Decimal, openpyxl, Matplotlib, Jupyter и pytest. Расчёт работает без внешней сети и ключей. На Windows команды те же; для первичной установки зависимостей нужен интернет.
@@ -329,7 +378,7 @@ python scripts/workbook.py validate
 python scripts/verify.py
 ```
 
-`verify.py` заново выполняет Notebook в чистом ядре, блокирует внешние соединения и сверяет CSV, документы и шесть графиков побайтово. Команда `--write-notebook` дополнительно сохраняет свежие выходы Notebook. [Workflow CI](.github/workflows/ci.yml) запускает эти проверки для PR в main и push в рабочую ветку; фактические результаты доступны во вкладке Checks PR. [Протокол локального аудита](docs/validation.md).
+`verify.py` заново выполняет оба Notebook в отдельных чистых ядрах, блокирует внешние соединения и сверяет CSV, документы и шесть графиков побайтово. Команда `--write-notebook` дополнительно сохраняет свежие выходы обоих Notebook. [Workflow CI](.github/workflows/ci.yml) запускает эти проверки для PR в main и push в рабочую ветку; фактические результаты доступны во вкладке Checks PR. [Протокол локального аудита](docs/validation.md).
 
 Первичная книга, CSV отзывов и методика защищены SHA256: 14 файлов. 62 прежних экономических артефакта доступны в [архиве с manifest](data/economics/history/README.md); исходные аналитические этапы сохранены. Работа ведётся в `analysis/menu-economics`; PR №1 остаётся Draft, слияние в main не выполняется.
 '''

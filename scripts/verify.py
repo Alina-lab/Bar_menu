@@ -36,7 +36,8 @@ def install_offline_guard():
 def snapshot():
     from scripts import economics as e
     paths = [ROOT / p for p in ("README.md", "docs/economics_report.md",
-             "docs/economics_methodology.md", "docs/project_plan.md")]
+             "docs/economics_methodology.md", "docs/project_plan.md",
+             "data/economics/menu_raw_material_costs.csv")]
     paths += sorted(e.OUT.glob("*")) + sorted(e.FIG.glob("*.png"))
     return {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in paths if p.is_file()}
@@ -51,26 +52,28 @@ def verify(write_notebook=False):
     install_offline_guard()
     e.check_baseline()
     e.run()
-    path = ROOT / "assortment_economics.ipynb"
-    notebook = nbformat.read(path, as_version=4)
-    cells = [c for c in notebook.cells if c.cell_type == "code"]
-    for cell in cells:
-        cell.outputs = []
-        cell.execution_count = None
-    original = cells[0].source
-    cells[0].source = ("from scripts.verify import install_offline_guard\n"
-                       "install_offline_guard()\n" + original)
-    NotebookClient(notebook, timeout=180, kernel_name="python3",
-                   resources={"metadata": {"path": str(ROOT)}}).execute()
-    cells[0].source = original
-    if write_notebook:
-        nbformat.write(notebook, path)
+    for name in ("assortment_economics.ipynb", "nastoyka_menu.ipynb"):
+        path = ROOT / name
+        notebook = nbformat.read(path, as_version=4)
+        cells = [c for c in notebook.cells if c.cell_type == "code"]
+        for cell in cells:
+            cell.outputs = []
+            cell.execution_count = None
+        original = cells[0].source
+        cells[0].source = ("from scripts.verify import install_offline_guard\n"
+                           "install_offline_guard()\n" + original)
+        NotebookClient(notebook, timeout=180, kernel_name="python3",
+                       resources={"metadata": {"path": str(ROOT)}}).execute()
+        cells[0].source = original
+        if write_notebook:
+            nbformat.write(notebook, path)
+        print(f"Fresh kernel: {name}, {len(cells)} code cells, no errors")
     e.check_baseline()
     after = snapshot()
     changed = sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
     if changed:
         raise RuntimeError("Невоспроизводимые результаты: " + ", ".join(changed))
-    print(f"Offline regeneration identical; fresh kernel: {len(cells)} code cells, no errors")
+    print("Offline regeneration identical, including aggregated menu purchasing CSV")
 
 
 if __name__ == "__main__":

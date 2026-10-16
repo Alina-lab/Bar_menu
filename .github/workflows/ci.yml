@@ -31,7 +31,7 @@ jobs:
         run: python -m pytest -q
       - name: Validate protected workbook
         run: python scripts/workbook.py validate
-      - name: Regenerate offline and execute notebook in a fresh kernel
+      - name: Regenerate offline and execute both notebooks in fresh kernels
         run: python scripts/verify.py
       - name: Require committed generated results
         run: |
