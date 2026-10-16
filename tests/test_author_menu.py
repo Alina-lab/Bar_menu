@@ -18,12 +18,13 @@ def data(tmp_path):
 
 
 def save_csv(path,rows):
-    with path.open('w',newline='') as f:
+    with path.open('w',newline='',encoding='utf-8') as f:
         w=csv.DictWriter(f,fieldnames=rows[0]);w.writeheader();w.writerows(rows)
 
 
 def test_all_author_doses_and_yields(data):
     menu,r,y,prices,plan=e.load_inputs(data)
+    assert all(row['selection_status']=='author_selected_final' for row in menu)
     assert r['C01']['ingredients']=={'vodka':500,'horseradish':95,'ginger':15,'honey':10}
     assert r['C01']['ingredient_ranges']['horseradish']=={'min_g':90,'max_g':100,'economic_choice':'midpoint'}
     assert r['C02']['ingredients']=={'vodka':500,'cherry':250,'sugar':250}
@@ -45,7 +46,7 @@ def test_all_author_doses_and_yields(data):
     assert len(prices)==16 and set(x['supplier'] for x in prices.values())=={'Ладога','METRO','Агропарк СПб'}
 
 
-@pytest.mark.parametrize('field,value',[('candidate_id','C10'),('tier','premium'),('price_50ml_rub','330'),('normalized_flavor','Вишня'),('selection_status','optimized')])
+@pytest.mark.parametrize('field,value',[('candidate_id','C10'),('tier','premium'),('price_50ml_rub','330'),('normalized_flavor','Вишня'),('selection_status','optimized'),('selection_status','author_selected_preliminary')])
 def test_author_menu_changes_fail(data,field,value):
     path=data/'author_selected_menu.csv';rows=e.read_csv(path);rows[0][field]=value;save_csv(path,rows)
     with pytest.raises(ValueError):e.load_inputs(data)
@@ -60,6 +61,20 @@ def test_bad_price_and_units_rejected(data,field,value):
 def test_missing_ingredient_price_does_not_become_zero(data):
     path=data/'ingredients.csv';rows=e.read_csv(path);save_csv(path,[r for r in rows if r['ingredient_id']!='milk'])
     with pytest.raises(ValueError,match='Нет цены'):e.load_inputs(data)
+
+
+@pytest.mark.parametrize('updates', [
+    {'regular_pack_price_rub':'1234.56'},
+    {'regular_pack_price_rub':'1234.56','regular_price_source':'test://fixture'},
+    {'regular_pack_price_rub':'0','regular_price_source':'test://fixture','regular_price_date':'2026-10-16'},
+    {'catalog_rate_min_packs':'2.5'},
+    {'catalog_rate_min_packs':'-1'},
+])
+def test_unproven_regular_price_and_bad_threshold_are_rejected(data,updates):
+    path=data/'ingredients.csv';rows=e.read_csv(path)
+    next(row for row in rows if row['ingredient_id']=='cherry').update(updates)
+    save_csv(path,rows)
+    with pytest.raises(ValueError):e.load_inputs(data)
 
 
 def test_measured_yield_updates_every_required_quantity_without_code_edit(data,tmp_path):

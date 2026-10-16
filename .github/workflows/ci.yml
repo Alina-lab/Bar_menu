@@ -1,0 +1,39 @@
+name: Project checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [analysis/menu-economics]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Validate protected workbook
+        run: python scripts/workbook.py validate
+      - name: Regenerate offline and execute notebook in a fresh kernel
+        run: python scripts/verify.py
+      - name: Require committed generated results
+        run: |
+          git diff --exit-code
+          test -z "$(git ls-files --others --exclude-standard)"

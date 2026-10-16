@@ -18,6 +18,8 @@
   "cash_after_ingredient_purchase_rub": "271997.20",
   "simple_menu_price_rub": "260",
   "displayed_item_costs_sum_rub": "36357.60",
+  "financial_status": "complete_price_scenario",
+  "missing_price_ingredients": "",
   "delivery_cost_rub": null,
   "other_operating_costs_rub": null,
   "net_profit_rub": null
