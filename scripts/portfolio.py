@@ -13,7 +13,7 @@ from pathlib import Path
 getcontext().prec = 50
 ROOT = Path(__file__).resolve().parents[1]
 D = Decimal
-ARTIFACTS = ("figures/menu_preview.png", "figures/cost_50ml.png", "menu/nastoyka_menu.pdf")
+ARTIFACTS = ("results/menu_preview.png", "results/cost_50ml.png", "results/nastoyka_menu.pdf")
 BASIC = {"C01", "C02", "C03", "C04", "C05", "C09", "C13", "C14"}
 PREMIUM = {"C06", "C12"}
 
@@ -93,7 +93,7 @@ def build_artifacts():
         "C13": "Облепиха · ягодная коллекция", "C14": "Клюква · ягодная классика",
         "C06": "Подсолнечная халва · мёд", "C12": "Малина · молоко · сливки",
     }
-    for directory in (ROOT / "figures", ROOT / "menu"):
+    for directory in (ROOT / "results",):
         directory.mkdir(exist_ok=True)
     with plt.rc_context({"font.family": "DejaVu Sans", "pdf.fonttype": 42}):
         fig = plt.figure(figsize=(210/25.4, 297/25.4), facecolor=paper)
@@ -161,7 +161,7 @@ def check_public_notebook(save=False):
     from nbclient import NotebookClient
     before = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ARTIFACTS}
     block_external_network(); build_artifacts()
-    notebook = nbformat.read(ROOT / "nastoyka_menu.ipynb", as_version=4)
+    notebook = nbformat.read(ROOT / "bar_menu_analysis.ipynb", as_version=4)
     cells = [c for c in notebook.cells if c.cell_type == "code"]
     for cell in cells:
         cell.outputs = []; cell.execution_count = None
@@ -171,7 +171,7 @@ def check_public_notebook(save=False):
                    resources={"metadata": {"path": str(ROOT)}}).execute()
     cells[0].source = original
     if save:
-        nbformat.write(notebook, ROOT / "nastoyka_menu.ipynb")
+        nbformat.write(notebook, ROOT / "bar_menu_analysis.ipynb")
     after = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ARTIFACTS}
     if before != after:
         raise RuntimeError("PDF/PNG отличаются от сохранённых результатов")

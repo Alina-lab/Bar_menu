@@ -17,9 +17,9 @@ NAMES = {
 }
 PUBLIC_FILES = {
     ".gitattributes", ".gitignore", ".github/workflows/ci.yml", "README.md", "requirements.txt",
-    "nastoyka_menu.ipynb", "data/nastoyki_reviews.xlsx", "data/flavor_summary.csv",
+    "bar_menu_analysis.ipynb", "data/nastoyki_reviews.xlsx", "data/flavor_summary.csv",
     "data/menu_economics.csv", "data/menu_raw_material_costs.csv", "docs/methodology.md",
-    "figures/menu_preview.png", "figures/cost_50ml.png", "menu/nastoyka_menu.pdf",
+    "results/menu_preview.png", "results/cost_50ml.png", "results/nastoyka_menu.pdf",
     "scripts/portfolio.py", "tests/test_portfolio.py",
 }
 
@@ -75,7 +75,7 @@ def test_research_bases_and_preserved_sources():
 
 
 def test_one_page_pdf_contains_ten_drinks_and_correct_prices():
-    reader = PdfReader(p.ROOT/"menu/nastoyka_menu.pdf")
+    reader = PdfReader(p.ROOT/"results/nastoyka_menu.pdf")
     assert len(reader.pages) == 1
     page = reader.pages[0]
     assert abs(float(page.mediabox.width)-595.276) < .1
@@ -89,9 +89,9 @@ def test_one_page_pdf_contains_ten_drinks_and_correct_prices():
 
 
 def test_images_are_readable_exports():
-    with Image.open(p.ROOT/"figures/menu_preview.png") as image:
+    with Image.open(p.ROOT/"results/menu_preview.png") as image:
         assert image.width >= 1400 and image.height >= 2000
-    with Image.open(p.ROOT/"figures/cost_50ml.png") as image:
+    with Image.open(p.ROOT/"results/cost_50ml.png") as image:
         assert image.width >= 1400 and image.height >= 800
 
 
@@ -101,7 +101,7 @@ def test_public_schemas_exclude_recipe_details():
                             "target_ready_ml", "portions", "used_cost_rub", "cost_50ml_rub"}
     purchases = p.read_csv("data/menu_raw_material_costs.csv")
     assert not {"candidate_id", "candidate_ids", "recipe_quantity", "scale_factor"} & set(purchases[0])
-    nb = nbformat.read(p.ROOT/"nastoyka_menu.ipynb", as_version=4)
+    nb = nbformat.read(p.ROOT/"bar_menu_analysis.ipynb", as_version=4)
     text = json.dumps(nb, ensure_ascii=False)
     assert all(s not in text for s in ["recipe_ingredients.csv", "recipes.json", "planned_yield_ml", "recipe_quantity"])
 
@@ -114,7 +114,7 @@ def test_current_public_tree_has_no_internal_archives():
 
 
 def test_notebook_saved_outputs_and_links():
-    nb = nbformat.read(p.ROOT/"nastoyka_menu.ipynb", as_version=4)
+    nb = nbformat.read(p.ROOT/"bar_menu_analysis.ipynb", as_version=4)
     nbformat.validate(nb)
     cells = [c for c in nb.cells if c.cell_type == "code"]
     assert [c.execution_count for c in cells] == list(range(1, len(cells)+1))
@@ -122,7 +122,7 @@ def test_notebook_saved_outputs_and_links():
     assert sum("image/png" in o.get("data", {}) for c in cells for o in c.outputs) == 3
     texts = [(p.ROOT/"README.md", (p.ROOT/"README.md").read_text(encoding="utf-8")),
              (p.ROOT/"docs/methodology.md", (p.ROOT/"docs/methodology.md").read_text(encoding="utf-8"))]
-    texts += [(p.ROOT/"nastoyka_menu.ipynb", c.source) for c in nb.cells if c.cell_type == "markdown"]
+    texts += [(p.ROOT/"bar_menu_analysis.ipynb", c.source) for c in nb.cells if c.cell_type == "markdown"]
     for path, text in texts:
         links = re.findall(r'\]\(([^)]+)\)|src="([^"]+)"', text)
         for markdown, html in links:
