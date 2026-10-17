@@ -165,7 +165,7 @@ def build_artifacts():
         ax.legend(handles=[Line2D([0], [0], color=ink, lw=7, label="Основные"),
                            Line2D([0], [0], color=accent, lw=7, label="Премиальные")],
                   frameon=False, loc="lower right", fontsize=9)
-        fig.tight_layout(rect=[0, .06, 1, 1]); fig.savefig(ROOT / ARTIFACTS[1], dpi=160); plt.close(fig)
+        fig.tight_layout(); fig.savefig(ROOT / ARTIFACTS[1], dpi=160); plt.close(fig)
 
 
 def block_external_network():
