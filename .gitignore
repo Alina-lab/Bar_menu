@@ -9,3 +9,8 @@ __pycache__/
 private*/
 *.zip
 *.bundle
+
+# Local editor settings and alternative virtual environments
+.vscode/
+.idea/
+.venv-*/
