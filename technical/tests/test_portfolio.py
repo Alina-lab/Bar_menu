@@ -8,7 +8,7 @@ import pytest
 from PIL import Image
 from pypdf import PdfReader
 
-from scripts import portfolio as p
+from technical.scripts import portfolio as p
 
 NAMES = {
     "C01": "Хреновуха", "C02": "Вишня", "C03": "Малина", "C04": "Лимончелло",
@@ -16,11 +16,13 @@ NAMES = {
     "C06": "Халва", "C12": "Малина — сливки",
 }
 PUBLIC_FILES = {
-    ".gitattributes", ".gitignore", ".github/workflows/ci.yml", "README.md", "requirements.txt",
-    "bar_menu_analysis.ipynb", "data/nastoyki_reviews.xlsx", "data/flavor_summary.csv",
-    "data/menu_economics.csv", "data/menu_raw_material_costs.csv",
-    "results/menu_preview.png", "results/cost_50ml.png", "results/nastoyka_menu.pdf",
-    "scripts/portfolio.py", "tests/test_portfolio.py",
+    ".gitattributes", ".gitignore", ".github/workflows/ci.yml", "README.md",
+    "bar_menu_analysis.ipynb", "technical/requirements.txt",
+    "technical/data/nastoyki_reviews.xlsx", "technical/data/flavor_summary.csv",
+    "technical/data/menu_economics.csv", "technical/data/menu_raw_material_costs.csv",
+    "technical/results/menu_preview.png", "technical/results/cost_50ml.png",
+    "technical/results/nastoyka_menu.pdf", "technical/scripts/portfolio.py",
+    "technical/tests/test_portfolio.py",
 }
 
 
@@ -69,6 +71,8 @@ def test_research_bases_and_preserved_sources():
     hashes = {
         "data/nastoyki_reviews.xlsx": "fcc10acb01335fe5d273be5d7ad425fe3365625d8f23d1be70ae6b0f5ae27d52",
         "data/flavor_summary.csv": "a0cfe4118427c38b4eaaff9cc202b36b633f9e406d17aa693d0ce69da168c768",
+        "data/menu_economics.csv": "08c72caa747a82de0c29c5fff0a548eb5f50e005f4879d0a6b75ee78ebbc23ed",
+        "data/menu_raw_material_costs.csv": "c36e9ab276e8d1cc38d1802b19b56b4937244a54ba4d70e08e5296c99cb09742",
     }
     for name, expected in hashes.items():
         assert hashlib.sha256((p.ROOT/name).read_bytes()).hexdigest() == expected
@@ -97,6 +101,7 @@ def test_images_are_readable_exports():
 
 def test_pdf_taste_groups_and_requested_copy():
     text = PdfReader(p.ROOT/"results/nastoyka_menu.pdf").pages[0].extract_text()
+    text = re.sub(r"\s+", " ", text)
     expected = [
         ("СЛАДКИЕ И ДЕСЕРТНЫЕ", ["Вишня", "Малина", "Халва", "Малина — сливки"]),
         ("КИСЛЫЕ И ОСВЕЖАЮЩИЕ", ["Лимончелло", "Щавель", "Облепиха", "Клюква"]),
@@ -110,7 +115,7 @@ def test_pdf_taste_groups_and_requested_copy():
         positions = [section.index(name) for name in names]
         assert positions == sorted(positions)
         assert section.count("₽") == len(names)
-    assert "Малина · молоко · сливки" in text
+    assert "Малина, молоко и сливки" in text
     for obsolete in ("Санкт-Петербург", "С А Н К Т", "порция", "Авторская коллекция",
                      "ОСНОВНАЯ КОЛЛЕКЦИЯ", "ДЕСЕРТНАЯ КОЛЛЕКЦИЯ", "содержит молочные продукты"):
         assert obsolete not in text
@@ -122,7 +127,8 @@ def test_pdf_print_layout_and_vector_artwork():
     from pypdf.generic import ContentStream
 
     page = PdfReader(p.ROOT/"results/nastoyka_menu.pdf").pages[0]
-    name_baselines, price_baselines = set(), []
+    name_baselines, price_baselines, description_baselines = set(), [], set()
+    price_positions = set()
     def inspect(text, matrix, text_matrix, font, size):
         text = text.strip()
         if not text:
@@ -134,20 +140,27 @@ def test_pdf_print_layout_and_vector_artwork():
         assert bounds.y0 >= 25 and bounds.y1 <= float(page.mediabox.height)-25
         if size == 15.2:
             name_baselines.add(y)
+        if size == 9.2:
+            description_baselines.add(y)
         if text in {"250", "300"}:
             price_baselines.append(y)
+            price_positions.add(x)
     page.extract_text(visitor_text=inspect)
     baselines = sorted(name_baselines)
     assert len(baselines) == len(price_baselines) == 10
-    assert all(b-a >= 30 for a, b in zip(baselines, baselines[1:]))
+    assert all(abs(b-a-60) < .01 for a, b in zip(baselines, baselines[1:]))
     assert sorted(price_baselines) == baselines
+    assert len(price_positions) == 1
+    assert len(description_baselines) == 10
+    assert all(abs(name-description-17) < .01
+               for name, description in zip(baselines, sorted(description_baselines)))
     artwork = page["/Resources"].get("/XObject")
     assert artwork is None or not artwork.get_object()  # No raster images in the PDF.
     assert any(op == b"c" for _, op in ContentStream(page.get_contents(), page.pdf).operations)
 
 
 def test_analysis_focus_and_current_paths():
-    notebook = nbformat.read(p.ROOT/"bar_menu_analysis.ipynb", as_version=4)
+    notebook = nbformat.read(p.PROJECT_ROOT/"bar_menu_analysis.ipynb", as_version=4)
     sources = "\n".join(c.source for c in notebook.cells)
     prose = sources
     assert not re.search(r"демограф|пол посетител|возраст посетител|город проживания", prose, re.I)
@@ -157,36 +170,47 @@ def test_analysis_focus_and_current_paths():
         assert old_path not in sources
 
 
+def test_agreed_notebook_text_is_preserved():
+    notebook = nbformat.read(p.PROJECT_ROOT/"bar_menu_analysis.ipynb", as_version=4)
+    markdown = [c.source.replace("](technical/data/", "](data/").replace("](technical/results/", "](results/")
+                for c in notebook.cells if c.cell_type == "markdown"]
+    assert hashlib.sha256("\n".join(markdown).encode("utf-8")).hexdigest() == (
+        "d67aff1e681e553f2d61f3824b58e94ff731a5123a300505b63a66af54f98524")
+
+
 def test_public_schemas_exclude_recipe_details():
     menu = p.read_csv("data/menu_economics.csv")
     assert set(menu[0]) == {"candidate_id", "normalized_flavor", "tier", "price_50ml_rub",
                             "target_ready_ml", "portions", "used_cost_rub", "cost_50ml_rub"}
     purchases = p.read_csv("data/menu_raw_material_costs.csv")
     assert not {"candidate_id", "candidate_ids", "recipe_quantity", "scale_factor"} & set(purchases[0])
-    nb = nbformat.read(p.ROOT/"bar_menu_analysis.ipynb", as_version=4)
+    nb = nbformat.read(p.PROJECT_ROOT/"bar_menu_analysis.ipynb", as_version=4)
     text = json.dumps(nb, ensure_ascii=False)
     assert all(s not in text for s in ["recipe_ingredients.csv", "recipes.json", "planned_yield_ml", "recipe_quantity"])
 
 
 def test_current_public_tree_has_no_internal_archives():
     skip = {".git", ".pytest_cache", "__pycache__", ".ipynb_checkpoints", ".venv"}
-    files = {str(f.relative_to(p.ROOT)) for f in p.ROOT.rglob("*")
-             if f.is_file() and not set(f.relative_to(p.ROOT).parts) & skip}
+    files = {f.relative_to(p.PROJECT_ROOT).as_posix() for f in p.PROJECT_ROOT.rglob("*")
+             if f.is_file() and not set(f.relative_to(p.PROJECT_ROOT).parts) & skip}
     assert files == PUBLIC_FILES
 
 
 def test_notebook_saved_outputs_and_links():
-    nb = nbformat.read(p.ROOT/"bar_menu_analysis.ipynb", as_version=4)
+    nb = nbformat.read(p.PROJECT_ROOT/"bar_menu_analysis.ipynb", as_version=4)
     nbformat.validate(nb)
     cells = [c for c in nb.cells if c.cell_type == "code"]
     assert [c.execution_count for c in cells] == list(range(1, len(cells)+1))
     assert not any(o.output_type == "error" for c in cells for o in c.outputs)
     assert sum("image/png" in o.get("data", {}) for c in cells for o in c.outputs) == 3
-    texts = [(p.ROOT/"README.md", (p.ROOT/"README.md").read_text(encoding="utf-8"))]
-    texts += [(p.ROOT/"bar_menu_analysis.ipynb", c.source) for c in nb.cells if c.cell_type == "markdown"]
+    texts = [(p.PROJECT_ROOT/"README.md", (p.PROJECT_ROOT/"README.md").read_text(encoding="utf-8"))]
+    texts += [(p.PROJECT_ROOT/"bar_menu_analysis.ipynb", c.source) for c in nb.cells if c.cell_type == "markdown"]
     for path, text in texts:
         links = re.findall(r'\]\(([^)]+)\)|src="([^"]+)"', text)
         for markdown, html in links:
             url = markdown or html
-            if "://" not in url and not url.startswith("#"):
+            own_repo = "https://github.com/Alina-lab/Bar_menu/blob/main/"
+            if url.startswith(own_repo):
+                assert (p.PROJECT_ROOT/url[len(own_repo):]).exists(), url
+            elif "://" not in url and not url.startswith("#"):
                 assert (path.parent/url.split("#")[0]).exists(), url

@@ -2,9 +2,9 @@
 
 Разработка меню из 10 настоек на основе анализа отзывов гостей и ассортимента баров Санкт-Петербурга. Для выбранных напитков рассчитаны закупки, сырьевая себестоимость и потенциальная выручка за два вечера работы бара.
 
-**[Анализ в Jupyter Notebook](https://github.com/Alina-lab/Bar_menu/blob/main/bar_menu_analysis.ipynb)** · **[Готовое меню](https://github.com/Alina-lab/Bar_menu/blob/main/results/nastoyka_menu.pdf)** · **[Таблица закупок](https://github.com/Alina-lab/Bar_menu/blob/main/data/menu_raw_material_costs.csv)**
+**[Анализ в Jupyter Notebook](https://github.com/Alina-lab/Bar_menu/blob/main/bar_menu_analysis.ipynb)** · **[Готовое меню](https://github.com/Alina-lab/Bar_menu/blob/main/technical/results/nastoyka_menu.pdf)** · **[Таблица закупок](https://github.com/Alina-lab/Bar_menu/blob/main/technical/data/menu_raw_material_costs.csv)**
 
-<img src="results/menu_preview.png" alt="Превью барного меню настоек" width="360">
+<img src="technical/results/menu_preview.png" alt="Превью барного меню настоек" width="360">
 
 ## Исследование
 
@@ -19,7 +19,7 @@
 ## Материалы проекта
 
 - [Jupyter Notebook](bar_menu_analysis.ipynb) — исследование отзывов, расчёты.
-- [Барное меню](results/nastoyka_menu.pdf) — PDF с напитками и ценами.
-- [Исходные данные](data/nastoyki_reviews.xlsx) — отзывы.
-- [Таблица закупок](data/menu_raw_material_costs.csv) — расходы.
-- [Экономика напитков](data/menu_economics.csv) — стоимость сырья каждой настойки.
+- [Барное меню](technical/results/nastoyka_menu.pdf) — PDF с напитками и ценами.
+- [Исходные данные](technical/data/nastoyki_reviews.xlsx) — отзывы.
+- [Таблица закупок](technical/data/menu_raw_material_costs.csv) — расходы.
+- [Экономика напитков](technical/data/menu_economics.csv) — стоимость сырья каждой настойки.

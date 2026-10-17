@@ -11,7 +11,8 @@ from decimal import Decimal, ROUND_HALF_UP, getcontext
 from pathlib import Path
 
 getcontext().prec = 50
-ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ROOT = PROJECT_ROOT / "technical"
 D = Decimal
 ARTIFACTS = ("results/menu_preview.png", "results/cost_50ml.png", "results/nastoyka_menu.pdf")
 PREMIUM = {"C06", "C12"}
@@ -22,6 +23,18 @@ MENU_GROUPS = (
     ("Свежие и травяные", ("C09",)),
     ("Острые и пряные", ("C01",)),
 )
+MENU_DESCRIPTIONS = {
+    "C01": "Корень хрена, имбирь и мёд",
+    "C02": "Вишня без косточек",
+    "C03": "Малиновая настойка",
+    "C04": "Лимонная цедра и сок",
+    "C05": "Щавель с мёдом",
+    "C09": "Зелёное яблоко и базилик",
+    "C13": "Настойка на облепихе",
+    "C14": "Ягоды клюквы",
+    "C06": "Подсолнечная халва и мёд",
+    "C12": "Малина, молоко и сливки",
+}
 
 
 def read_csv(name):
@@ -83,59 +96,6 @@ def economics_summary():
             "material_contribution_rub": revenue-used}
 
 
-def draw_vine(ax, x, y, width):
-    """Векторная виноградная ветвь: стебель, лопастные листья и гроздь."""
-    from math import cos, sin, radians
-    from matplotlib.path import Path as VectorPath
-    from matplotlib.patches import Circle, PathPatch
-
-    height = width * 210 / 297
-    def point(u, v):
-        return x + width * u, y + height * v
-
-    def curve(points, color=ACCENT, weight=.65):
-        path = VectorPath([point(*p) for p in points],
-                          [VectorPath.MOVETO] + [VectorPath.CURVE4] * (len(points)-1))
-        ax.add_patch(PathPatch(path, fill=False, edgecolor=color, linewidth=weight,
-                               capstyle="round", joinstyle="round"))
-
-    curve([(-.53, -.025), (-.28, .06), (.22, -.07), (.53, .035)], weight=.9)
-    # Each leaf has five broad lobes and fine veins, without raster artwork.
-    outline = [(0, 0), (-.28, .12), (-.55, .07), (-.45, .32), (-.76, .43),
-               (-.47, .56), (-.58, .78), (-.24, .73), (0, 1.03),
-               (.23, .73), (.56, .78), (.46, .54), (.73, .43), (.46, .30),
-               (.53, .08), (.26, .12), (0, 0)]
-    for u, v, angle, scale in [(-.34, .012, 27, .13), (-.10, .005, 155, .11),
-                                 (.12, -.009, -28, .125), (.35, .009, 207, .10)]:
-        rotation = radians(angle)
-        def leaf_point(a, b):
-            return point(u + scale*(a*cos(rotation)-b*sin(rotation)),
-                         v + scale*(a*sin(rotation)+b*cos(rotation)))
-        vertices = [leaf_point(*outline[0])]
-        codes = [VectorPath.MOVETO]
-        for index in range(1, len(outline)):
-            a, b = outline[index], outline[(index+1) % len(outline)]
-            vertices.extend([leaf_point(*a), leaf_point((a[0]+b[0])/2, (a[1]+b[1])/2)])
-            codes.extend([VectorPath.CURVE3, VectorPath.CURVE3])
-        vertices.append(vertices[0]); codes.append(VectorPath.CLOSEPOLY)
-        ax.add_patch(PathPatch(VectorPath(vertices, codes), facecolor="#E8E9DC",
-                               edgecolor=ACCENT, linewidth=.55, joinstyle="round"))
-        for tip in [(0, .84), (-.46, .43), (.44, .43)]:
-            a, b = leaf_point(0, 0), leaf_point(*tip)
-            ax.plot([a[0], b[0]], [a[1], b[1]], color=ACCENT, linewidth=.32)
-    curve([(.26, -.006), (.27, -.056), (.24, -.08), (.25, -.115)], weight=.5)
-    for row, count in enumerate([3, 3, 2, 1]):
-        for col in range(count):
-            u = .25 + (col-(count-1)/2)*.036
-            v = -.12-row*.033
-            cx, cy = point(u, v)
-            ax.add_patch(Circle((cx, cy), width*.017, transform=ax.transAxes,
-                                facecolor="#E8E0E7", edgecolor="#817080", linewidth=.45))
-    curve([(-.48, -.015), (-.59, -.055), (-.60, .09), (-.52, .075),
-           (-.46, .06), (-.52, .015), (-.55, .052)], weight=.55)
-    curve([(.46, .015), (.58, .11), (.62, -.045), (.54, -.04)], weight=.5)
-
-
 def build_artifacts():
     os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "bar-menu-mpl"))
     import matplotlib
@@ -146,40 +106,50 @@ def build_artifacts():
     menu = read_csv("data/menu_economics.csv")
     by_id = {row["candidate_id"]: row for row in menu}
     ink, accent, paper = INK, ACCENT, PAPER
-    descriptions = {
-        "C01": "Хрен · имбирь · мёд", "C02": "",
-        "C03": "", "C04": "Лимонная цедра · сок",
-        "C05": "Щавель · мёд", "C09": "Зелёное яблоко · базилик",
-        "C13": "", "C14": "",
-        "C06": "Подсолнечная халва · мёд", "C12": "Малина · молоко · сливки",
-    }
     (ROOT / "results").mkdir(exist_ok=True)
     with plt.rc_context({"font.family": "DejaVu Sans", "pdf.fonttype": 42}):
-        fig = plt.figure(figsize=(210/25.4, 297/25.4), facecolor=paper)
+        from matplotlib.path import Path as VectorPath
+        from matplotlib.patches import PathPatch
+
+        menu_ink, menu_accent, menu_paper = "#352E2A", "#825445", "#FAF6EC"
+        page_width, page_height = 210/25.4*72, 297/25.4*72
+        fig = plt.figure(figsize=(page_width/72, page_height/72), facecolor=menu_paper)
         ax = fig.add_axes([0, 0, 1, 1]); ax.axis("off")
-        ax.set(xlim=(0, 1), ylim=(0, 1))
-        ax.text(.5, .928, "НАСТОЙКИ", ha="center", fontsize=37,
-                fontfamily="DejaVu Serif", color=ink)
-        draw_vine(ax, .5, .865, .41)
-        ax.text(.5, .813, "50 мл", ha="center", fontsize=10.5, color=accent)
-        heading = .776
-        for label, ids in MENU_GROUPS:
-            ax.text(.115, heading, label.upper(), fontsize=8.8, color=accent)
-            ax.plot([.115, .885], [heading-.013, heading-.013], color="#D9D9C9", linewidth=.45)
-            y = heading-.041
+        ax.set(xlim=(0, page_width), ylim=(0, page_height))
+        left, names_x, right = 48, 174, page_width-48
+        ax.text(left, 766, "НАСТОЙКИ", fontsize=33, fontfamily="DejaVu Serif", color=menu_ink)
+        ax.text(right, 768, "50 мл", ha="right", fontsize=10.5, color=menu_accent)
+        ax.plot([left, right], [737, 737], color=menu_accent, linewidth=.7)
+
+        # One continuous rhythm for all ten drinks; category labels use the side margin.
+        y, row_step = 691, 60
+        for index, (label, ids) in enumerate(MENU_GROUPS):
+            if index:
+                ax.plot([left, right], [y+27, y+27], color="#D8CFC2", linewidth=.45)
+            category = label.upper().replace(" И ", "\nИ ")
+            ax.text(left, y+1, category, fontsize=8.5, color=menu_accent,
+                    va="top", linespacing=1.55)
             for cid in ids:
                 row = by_id[cid]
-                ax.text(.115, y, row["normalized_flavor"], fontsize=15.2,
-                        fontfamily="DejaVu Serif", color=ink)
-                ax.text(.885, y, fmt(row["price_50ml_rub"], 0)+" ₽", fontsize=12.1,
-                        ha="right", color=ink)
-                if descriptions[cid]:
-                    ax.text(.115, y-.019, descriptions[cid], fontsize=8.2, color="#797176")
-                y -= .047
-            heading = y-.005
-        draw_vine(ax, .5, .081, .24)
-        fig.savefig(ROOT / ARTIFACTS[0], dpi=180, facecolor=paper)
-        fig.savefig(ROOT / ARTIFACTS[2], facecolor=paper,
+                ax.text(names_x, y, row["normalized_flavor"], fontsize=15.2,
+                        fontfamily="DejaVu Serif", color=menu_ink)
+                ax.text(names_x, y-17, MENU_DESCRIPTIONS[cid], fontsize=9.2, color="#71665C")
+                ax.text(right, y, fmt(row["price_50ml_rub"], 0)+" ₽", fontsize=12.1,
+                        ha="right", color=menu_ink)
+                y -= row_step
+
+        # A small open branch, without leaves, fruit or filled decorative shapes.
+        centre = page_width/2
+        for points in [
+            [(centre-27, 72), (centre-8, 81), (centre+8, 67), (centre+27, 76)],
+            [(centre-10, 75), (centre-13, 79), (centre-13, 82), (centre-11, 85)],
+            [(centre+10, 72), (centre+13, 70), (centre+16, 67), (centre+18, 68)],
+        ]:
+            path = VectorPath(points, [VectorPath.MOVETO]+[VectorPath.CURVE4]*3)
+            ax.add_patch(PathPatch(path, fill=False, edgecolor="#AC9580", linewidth=.55,
+                                   capstyle="round"))
+        fig.savefig(ROOT / ARTIFACTS[0], dpi=180, facecolor=menu_paper)
+        fig.savefig(ROOT / ARTIFACTS[2], facecolor=menu_paper,
                     metadata={"Title": "Настойки — барное меню", "Author": "Bar_menu",
                               "CreationDate": None, "ModDate": None})
         plt.close(fig)
@@ -225,17 +195,17 @@ def check_public_notebook(save=False):
     from nbclient import NotebookClient
     before = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ARTIFACTS}
     block_external_network(); build_artifacts()
-    notebook = nbformat.read(ROOT / "bar_menu_analysis.ipynb", as_version=4)
+    notebook = nbformat.read(PROJECT_ROOT / "bar_menu_analysis.ipynb", as_version=4)
     cells = [c for c in notebook.cells if c.cell_type == "code"]
     for cell in cells:
         cell.outputs = []; cell.execution_count = None
     original = cells[0].source
-    cells[0].source = "from scripts.portfolio import block_external_network\nblock_external_network()\n" + original
+    cells[0].source = "from technical.scripts.portfolio import block_external_network\nblock_external_network()\n" + original
     NotebookClient(notebook, timeout=180, kernel_name="python3",
-                   resources={"metadata": {"path": str(ROOT)}}).execute()
+                   resources={"metadata": {"path": str(PROJECT_ROOT)}}).execute()
     cells[0].source = original
     if save:
-        nbformat.write(notebook, ROOT / "bar_menu_analysis.ipynb")
+        nbformat.write(notebook, PROJECT_ROOT / "bar_menu_analysis.ipynb")
     after = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ARTIFACTS}
     if before != after:
         raise RuntimeError("PDF/PNG отличаются от сохранённых результатов")
