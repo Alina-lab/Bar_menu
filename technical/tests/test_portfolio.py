@@ -16,7 +16,7 @@ NAMES = {
     "C06": "Халва", "C12": "Малина — сливки",
 }
 PUBLIC_FILES = {
-    ".gitattributes", ".gitignore", ".github/workflows/ci.yml", "README.md",
+    ".gitattributes", ".gitignore", "README.md",
     "bar_menu_analysis.ipynb", "technical/requirements.txt",
     "technical/data/nastoyki_reviews.xlsx", "technical/data/flavor_summary.csv",
     "technical/data/menu_economics.csv", "technical/data/menu_raw_material_costs.csv",
