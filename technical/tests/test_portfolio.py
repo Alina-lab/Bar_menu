@@ -115,7 +115,21 @@ def test_pdf_taste_groups_and_requested_copy():
         positions = [section.index(name) for name in names]
         assert positions == sorted(positions)
         assert section.count("₽") == len(names)
-    assert "Малина, молоко и сливки" in text
+    descriptions = {
+        "C02": "Вишнёвая кислинка.",
+        "C03": "Ароматная малина.",
+        "C06": "Десертная настойка с подсолнечной халвой и мёдом.",
+        "C12": "Малина на нежной основе из молока и сливок.",
+        "C04": "Концентрированный цитрус.",
+        "C05": "Свежий щавель с мёдом.",
+        "C13": "Насыщенная облепиха с кислинкой.",
+        "C14": "Терпкая клюква.",
+        "C09": "Кислое яблоко и зеленый базилик.",
+        "C01": "Хрен, имбирь и мёд с пряным характером.",
+    }
+    assert p.MENU_DESCRIPTIONS == descriptions
+    for description in descriptions.values():
+        assert text.count(description) == 1
     for obsolete in ("Санкт-Петербург", "С А Н К Т", "порция", "Авторская коллекция",
                      "ОСНОВНАЯ КОЛЛЕКЦИЯ", "ДЕСЕРТНАЯ КОЛЛЕКЦИЯ", "содержит молочные продукты"):
         assert obsolete not in text
@@ -129,6 +143,7 @@ def test_pdf_print_layout_and_vector_artwork():
     page = PdfReader(p.ROOT/"results/nastoyka_menu.pdf").pages[0]
     name_baselines, price_baselines, description_baselines = set(), [], set()
     price_positions = set()
+    description_right_edges = []
     def inspect(text, matrix, text_matrix, font, size):
         text = text.strip()
         if not text:
@@ -142,6 +157,7 @@ def test_pdf_print_layout_and_vector_artwork():
             name_baselines.add(y)
         if size == 9.2:
             description_baselines.add(y)
+            description_right_edges.append(bounds.x1)
         if text in {"250", "300"}:
             price_baselines.append(y)
             price_positions.add(x)
@@ -151,6 +167,7 @@ def test_pdf_print_layout_and_vector_artwork():
     assert all(abs(b-a-60) < .01 for a, b in zip(baselines, baselines[1:]))
     assert sorted(price_baselines) == baselines
     assert len(price_positions) == 1
+    assert max(description_right_edges) < min(price_positions)-12
     assert len(description_baselines) == 10
     assert all(abs(name-description-17) < .01
                for name, description in zip(baselines, sorted(description_baselines)))
