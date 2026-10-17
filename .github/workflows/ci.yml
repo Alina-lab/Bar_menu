@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate:
@@ -20,29 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: true
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: technical/requirements.txt
       - run: python -m pip install -r technical/requirements.txt
-      - name: Update chart and saved notebook after chart-generator edit
-        if: github.event_name == 'push'
-        run: |
-          if git diff --quiet HEAD^ HEAD -- technical/scripts/portfolio.py; then
-            echo "Chart generator unchanged; no rebuild needed."
-          else
-            python technical/scripts/portfolio.py
-            python technical/scripts/portfolio.py --save-notebook
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add technical/results/cost_50ml.png bar_menu_analysis.ipynb
-            if ! git diff --cached --quiet; then
-              git commit -m "build: refresh chart output without footer"
-              git push origin HEAD:main
-            fi
-          fi
       - name: Check public data, menu and excluded technical materials
         run: python -m pytest -q technical/tests
       - name: Rebuild PDF/PNG and execute the public notebook offline
